@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Sleep -Seconds 4; try { $r = Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 15; \"STATUS: $\\($r.StatusCode\\)\"; $r.Content.Length } catch { \"ERROR: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing; $r.Content.Contains\\(\"톤수를 선택해 주세요\"\\))",
+      "PowerShell(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(9\\).toString\\('base64url'\\)\\)\")"
+    ]
+  }
+}
