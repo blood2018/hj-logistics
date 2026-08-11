@@ -44,7 +44,7 @@ export async function submitQuoteRequest(
     console.error(err);
     return {
       status: "error",
-      message: `[DEBUG] 서버 설정 오류: ${err instanceof Error ? err.message : String(err)}`,
+      message: "서버 설정 오류로 접수하지 못했습니다. 관리자에게 문의해 주세요.",
     };
   }
 
@@ -60,7 +60,7 @@ export async function submitQuoteRequest(
     console.error("Supabase quote_requests insert failed", error);
     return {
       status: "error",
-      message: `[DEBUG] 저장 실패: ${error.message}`,
+      message: "저장 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
     };
   }
 
