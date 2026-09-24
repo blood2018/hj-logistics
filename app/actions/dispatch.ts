@@ -14,6 +14,7 @@ type DispatchField =
   | "tonnage"
   | "driver"
   | "driverPhone"
+  | "vehicleNumber"
   | "amount";
 
 export type DispatchFormState = {
@@ -30,6 +31,7 @@ export type DispatchColumn =
   | "tonnage"
   | "driver"
   | "driver_phone"
+  | "vehicle_number"
   | "amount";
 
 export type UpdateResult = { ok: true } | { ok: false; message: string };
@@ -68,14 +70,19 @@ const FIELD_RULES: Record<
   },
   driver: {
     column: "driver",
-    parse: (raw) => (raw ? { value: raw } : { error: "기사를 입력해 주세요." }),
+    parse: (raw) => ({ value: raw }), // 선택 입력
   },
   driverPhone: {
     column: "driver_phone",
+    // 선택 입력이지만, 입력했다면 형식을 확인합니다.
     parse: (raw) =>
-      PHONE_PATTERN.test(raw)
+      !raw || PHONE_PATTERN.test(raw)
         ? { value: raw }
         : { error: "전화번호를 올바르게 입력해 주세요. (예: 010-1234-5678)" },
+  },
+  vehicleNumber: {
+    column: "vehicle_number",
+    parse: (raw) => ({ value: raw }), // 선택 입력
   },
   amount: {
     column: "amount",

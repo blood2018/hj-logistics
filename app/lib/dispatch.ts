@@ -9,6 +9,7 @@ export type DispatchRecord = {
   tonnage: string;
   driver: string;
   driver_phone: string;
+  vehicle_number: string;
   amount: number;
   created_at: string;
 };
@@ -20,6 +21,7 @@ export type DispatchFilters = {
   tonnage: string;
   driver: string;
   driverPhone: string;
+  vehicleNumber: string;
 };
 
 export const FILTER_KEYS = [
@@ -29,6 +31,7 @@ export const FILTER_KEYS = [
   "tonnage",
   "driver",
   "driverPhone",
+  "vehicleNumber",
 ] as const satisfies readonly (keyof DispatchFilters)[];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -81,7 +84,7 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
     let query = supabase
       .from("dispatch_records")
       .select(
-        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, amount, created_at"
+        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, vehicle_number, amount, created_at"
       );
 
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);
@@ -91,6 +94,8 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
     if (filters.driver) query = query.ilike("driver", toContainsPattern(filters.driver));
     if (filters.driverPhone)
       query = query.ilike("driver_phone", toContainsPattern(filters.driverPhone));
+    if (filters.vehicleNumber)
+      query = query.ilike("vehicle_number", toContainsPattern(filters.vehicleNumber));
 
     const { data, error } = await query
       .order("dispatch_date", { ascending: false })

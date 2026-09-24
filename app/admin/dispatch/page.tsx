@@ -89,7 +89,7 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
   return (
     <form
       method="get"
-      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 lg:grid-cols-7"
+      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 lg:grid-cols-8"
     >
       <Field label="시작일">
         <input type="date" name="dateFrom" defaultValue={filters.dateFrom} className={inputClass} />
@@ -123,7 +123,10 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
       <Field label="기사 전화번호">
         <input type="text" name="driverPhone" defaultValue={filters.driverPhone} className={inputClass} />
       </Field>
-      <div className="col-span-2 flex items-end justify-end gap-2 lg:col-span-1">
+      <Field label="차량번호">
+        <input type="text" name="vehicleNumber" defaultValue={filters.vehicleNumber} className={inputClass} />
+      </Field>
+      <div className="col-span-2 flex items-end justify-end gap-2 md:col-span-1">
         <Link
           href="/admin/dispatch"
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
@@ -175,7 +178,7 @@ function ExportForm({ filters }: { filters: DispatchFilters }) {
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[980px] text-left text-sm">
+      <table className="w-full min-w-[1100px] text-left text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500">
           <tr>
             <th className="px-4 py-3">날짜</th>
@@ -185,6 +188,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             <th className="px-4 py-3">톤수</th>
             <th className="px-4 py-3">기사</th>
             <th className="px-4 py-3">기사 전화번호</th>
+            <th className="px-4 py-3">차량번호</th>
             <th className="px-4 py-3 text-right">금액</th>
             <th className="px-4 py-3" />
           </tr>
@@ -232,6 +236,12 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
               />
               <EditableCell
                 id={row.id}
+                column="vehicle_number"
+                value={row.vehicle_number}
+                className="whitespace-nowrap text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
                 column="amount"
                 value={String(row.amount)}
                 display={won.format(Number(row.amount))}
@@ -246,7 +256,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
 
           {rows.length === 0 && (
             <tr>
-              <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                 조건에 맞는 운송 내역이 없습니다.
               </td>
             </tr>

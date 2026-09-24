@@ -19,6 +19,7 @@ const RESET_FIELDS = [
   "tonnage",
   "driver",
   "driverPhone",
+  "vehicleNumber",
   "amount",
 ];
 
@@ -165,6 +166,20 @@ export default function DispatchEntryForm({ today }: { today: string }) {
       ),
     },
     {
+      name: "vehicleNumber",
+      label: "차량번호",
+      render: (invalid) => (
+        <input
+          id="vehicleNumber"
+          name="vehicleNumber"
+          type="text"
+          placeholder="예: 경남81아2637"
+          aria-invalid={invalid}
+          className={inputClass}
+        />
+      ),
+    },
+    {
       name: "amount",
       label: "금액(원)",
       render: (invalid) => (
@@ -187,7 +202,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
       onSubmit={handleSubmit}
       className="rounded-xl border border-slate-200 bg-white p-5"
     >
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
         {fields.map(({ name, label, render }) => (
           <div key={name} className="flex flex-col gap-1">
             <label htmlFor={name} className="text-xs font-medium text-slate-600">

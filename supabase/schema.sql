@@ -28,6 +28,7 @@ create table if not exists public.dispatch_records (
   tonnage text not null,
   driver text not null,
   driver_phone text not null default '',
+  vehicle_number text not null default '',
   amount bigint not null check (amount >= 0),
   created_at timestamptz not null default now()
 );
@@ -37,9 +38,11 @@ create index if not exists dispatch_records_date_idx
 create index if not exists dispatch_records_company_idx
   on public.dispatch_records (company);
 
--- 이미 테이블을 만든 경우 기사 전화번호 컬럼을 추가합니다.
+-- 이미 테이블을 만든 경우 기사 전화번호·차량번호 컬럼을 추가합니다.
 alter table public.dispatch_records
   add column if not exists driver_phone text not null default '';
+alter table public.dispatch_records
+  add column if not exists vehicle_number text not null default '';
 
 -- 정책을 만들지 않으므로 anon/authenticated 키로는 어떤 접근도 불가능합니다.
 alter table public.dispatch_records enable row level security;
