@@ -9,7 +9,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl gap-6 px-6">
+        <div className="mx-auto flex max-w-[1600px] gap-6 px-6">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}

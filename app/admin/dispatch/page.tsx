@@ -41,7 +41,7 @@ export default async function DispatchPage({
 
   return (
     <div className="px-6 py-10">
-      <div className="mx-auto max-w-7xl space-y-8">
+      <div className="mx-auto max-w-[1600px] space-y-8">
         <section>
           <h1 className="text-2xl font-bold text-slate-900">운송 내역</h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -89,7 +89,7 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
   return (
     <form
       method="get"
-      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 lg:grid-cols-8"
+      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 xl:grid-cols-[repeat(7,minmax(0,1fr))_auto]"
     >
       <Field label="시작일">
         <input type="date" name="dateFrom" defaultValue={filters.dateFrom} className={inputClass} />
@@ -126,16 +126,16 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
       <Field label="차량번호">
         <input type="text" name="vehicleNumber" defaultValue={filters.vehicleNumber} className={inputClass} />
       </Field>
-      <div className="col-span-2 flex items-end justify-end gap-2 md:col-span-1">
+      <div className="col-span-2 flex items-end justify-end gap-2 whitespace-nowrap md:col-span-1">
         <Link
           href="/admin/dispatch"
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+          className="shrink-0 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
         >
           초기화
         </Link>
         <button
           type="submit"
-          className="rounded-lg bg-blue-950 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-900"
+          className="shrink-0 rounded-lg bg-blue-950 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-900"
         >
           조회
         </button>
