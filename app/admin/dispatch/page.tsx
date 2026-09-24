@@ -13,6 +13,7 @@ import {
 } from "@/app/lib/excel-templates";
 import DispatchEntryForm from "./DispatchEntryForm";
 import DeleteButton from "./DeleteButton";
+import EditableCell from "./EditableCell";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,9 @@ export default async function DispatchPage({
               조회 결과{" "}
               <strong className="text-slate-900">{rows.length}건</strong> · 합계{" "}
               <strong className="text-slate-900">{won.format(total)}원</strong>
+              <span className="ml-2 text-xs text-slate-400">
+                셀을 더블클릭하면 수정할 수 있습니다 (Enter 저장 · Esc 취소)
+              </span>
             </p>
             <ExportForm filters={filters} />
           </div>
@@ -188,22 +192,52 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
         <tbody className="divide-y divide-slate-100">
           {rows.map((row) => (
             <tr key={row.id}>
-              <td className="whitespace-nowrap px-4 py-3 text-slate-500">{row.dispatch_date}</td>
-              <td className="px-4 py-3 text-slate-900">{row.company}</td>
-              <td className="px-4 py-3 text-slate-900">{row.origin}</td>
-              <td className="px-4 py-3 text-slate-900">{row.destination}</td>
-              <td className="px-4 py-3 text-slate-900">{row.tonnage}</td>
-              <td className="px-4 py-3 text-slate-900">{row.driver}</td>
-              <td className="whitespace-nowrap px-4 py-3">
-                {row.driver_phone && (
-                  <a href={`tel:${row.driver_phone}`} className="text-blue-700 hover:underline">
-                    {row.driver_phone}
-                  </a>
-                )}
-              </td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-900">
-                {won.format(Number(row.amount))}
-              </td>
+              <EditableCell
+                id={row.id}
+                column="dispatch_date"
+                value={row.dispatch_date}
+                input="date"
+                className="whitespace-nowrap text-slate-500"
+              />
+              <EditableCell
+                id={row.id}
+                column="company"
+                value={row.company}
+                input="select"
+                options={COMPANY_OPTIONS}
+                className="text-slate-900"
+              />
+              <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
+              <EditableCell
+                id={row.id}
+                column="destination"
+                value={row.destination}
+                className="text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
+                column="tonnage"
+                value={row.tonnage}
+                input="select"
+                options={TONNAGE_OPTIONS}
+                className="text-slate-900"
+              />
+              <EditableCell id={row.id} column="driver" value={row.driver} className="text-slate-900" />
+              <EditableCell
+                id={row.id}
+                column="driver_phone"
+                value={row.driver_phone}
+                input="tel"
+                className="whitespace-nowrap text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
+                column="amount"
+                value={String(row.amount)}
+                display={won.format(Number(row.amount))}
+                input="number"
+                className="text-right tabular-nums text-slate-900"
+              />
               <td className="px-4 py-3 text-right">
                 <DeleteButton id={row.id} />
               </td>
