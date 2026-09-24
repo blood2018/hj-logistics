@@ -17,26 +17,18 @@ export type DispatchFilters = {
   dateFrom: string;
   dateTo: string;
   company: string;
-  origin: string;
-  destination: string;
   tonnage: string;
   driver: string;
   driverPhone: string;
-  amountMin: string;
-  amountMax: string;
 };
 
 export const FILTER_KEYS = [
   "dateFrom",
   "dateTo",
   "company",
-  "origin",
-  "destination",
   "tonnage",
   "driver",
   "driverPhone",
-  "amountMin",
-  "amountMax",
 ] as const satisfies readonly (keyof DispatchFilters)[];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -46,31 +38,33 @@ type SearchParamsLike =
   | URLSearchParams
   | { [key: string]: string | string[] | undefined };
 
+export function todayInKorea() {
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+}
+
+/**
+ * URL 파라미터를 조회 조건으로 바꿉니다.
+ * 시작일·종료일 파라미터가 아예 없으면 오늘 날짜를 쓰고, 빈 값으로 오면(사용자가 지운 경우) 기간 제한 없이 조회합니다.
+ */
 export function parseDispatchFilters(params: SearchParamsLike): DispatchFilters {
   const get = (key: string) => {
     const value =
       params instanceof URLSearchParams ? params.get(key) : params[key];
-    return (Array.isArray(value) ? value[0] : value ?? "").trim();
+    if (value === null || value === undefined) return undefined;
+    return (Array.isArray(value) ? value[0] ?? "" : value).trim();
   };
 
+  const today = todayInKorea();
   const filters = Object.fromEntries(
-    FILTER_KEYS.map((key) => [key, get(key)])
+    FILTER_KEYS.map((key) => [key, get(key) ?? ""])
   ) as DispatchFilters;
+  filters.dateFrom = get("dateFrom") ?? today;
+  filters.dateTo = get("dateTo") ?? today;
 
   if (filters.dateFrom && !DATE_PATTERN.test(filters.dateFrom)) filters.dateFrom = "";
   if (filters.dateTo && !DATE_PATTERN.test(filters.dateTo)) filters.dateTo = "";
-  if (filters.amountMin && !/^\d+$/.test(filters.amountMin)) filters.amountMin = "";
-  if (filters.amountMax && !/^\d+$/.test(filters.amountMax)) filters.amountMax = "";
 
   return filters;
-}
-
-export function filtersToQueryString(filters: DispatchFilters) {
-  const params = new URLSearchParams();
-  for (const key of FILTER_KEYS) {
-    if (filters[key]) params.set(key, filters[key]);
-  }
-  return params.toString();
 }
 
 // ilike 패턴에서 와일드카드로 해석되는 문자를 이스케이프합니다.
@@ -93,15 +87,10 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);
     if (filters.dateTo) query = query.lte("dispatch_date", filters.dateTo);
     if (filters.company) query = query.eq("company", filters.company);
-    if (filters.origin) query = query.ilike("origin", toContainsPattern(filters.origin));
-    if (filters.destination)
-      query = query.ilike("destination", toContainsPattern(filters.destination));
     if (filters.tonnage) query = query.eq("tonnage", filters.tonnage);
     if (filters.driver) query = query.ilike("driver", toContainsPattern(filters.driver));
     if (filters.driverPhone)
       query = query.ilike("driver_phone", toContainsPattern(filters.driverPhone));
-    if (filters.amountMin) query = query.gte("amount", Number(filters.amountMin));
-    if (filters.amountMax) query = query.lte("amount", Number(filters.amountMax));
 
     const { data, error } = await query
       .order("dispatch_date", { ascending: false })

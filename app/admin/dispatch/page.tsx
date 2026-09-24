@@ -1,8 +1,8 @@
 import Link from "next/link";
 import {
   fetchDispatchRecords,
-  filtersToQueryString,
   parseDispatchFilters,
+  todayInKorea,
   type DispatchFilters,
   type DispatchRecord,
 } from "@/app/lib/dispatch";
@@ -25,7 +25,7 @@ export default async function DispatchPage({
   searchParams,
 }: PageProps<"/admin/dispatch">) {
   const filters = parseDispatchFilters(await searchParams);
-  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
+  const today = todayInKorea();
 
   let rows: DispatchRecord[] = [];
   let loadError: string | null = null;
@@ -37,7 +37,6 @@ export default async function DispatchPage({
   }
 
   const total = rows.reduce((sum, row) => sum + Number(row.amount), 0);
-  const hasFilters = filtersToQueryString(filters) !== "";
 
   return (
     <div className="px-6 py-10">
@@ -62,7 +61,7 @@ export default async function DispatchPage({
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <p className="text-sm text-slate-600">
-              {hasFilters ? "검색 결과" : "전체"}{" "}
+              조회 결과{" "}
               <strong className="text-slate-900">{rows.length}건</strong> · 합계{" "}
               <strong className="text-slate-900">{won.format(total)}원</strong>
             </p>
@@ -86,7 +85,7 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
   return (
     <form
       method="get"
-      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 lg:grid-cols-6"
+      className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-4 lg:grid-cols-7"
     >
       <Field label="시작일">
         <input type="date" name="dateFrom" defaultValue={filters.dateFrom} className={inputClass} />
@@ -114,25 +113,13 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
           ))}
         </select>
       </Field>
-      <Field label="상차지 (포함)">
-        <input type="text" name="origin" defaultValue={filters.origin} className={inputClass} />
-      </Field>
-      <Field label="하차지 (포함)">
-        <input type="text" name="destination" defaultValue={filters.destination} className={inputClass} />
-      </Field>
-      <Field label="기사 (포함)">
+      <Field label="기사">
         <input type="text" name="driver" defaultValue={filters.driver} className={inputClass} />
       </Field>
-      <Field label="기사 전화번호 (포함)">
+      <Field label="기사 전화번호">
         <input type="text" name="driverPhone" defaultValue={filters.driverPhone} className={inputClass} />
       </Field>
-      <Field label="최소 금액">
-        <input type="number" min={0} name="amountMin" defaultValue={filters.amountMin} className={inputClass} />
-      </Field>
-      <Field label="최대 금액">
-        <input type="number" min={0} name="amountMax" defaultValue={filters.amountMax} className={inputClass} />
-      </Field>
-      <div className="col-span-2 flex items-end gap-2 md:col-span-4 lg:col-span-2 lg:justify-end">
+      <div className="col-span-2 flex items-end justify-end gap-2 lg:col-span-1">
         <Link
           href="/admin/dispatch"
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
@@ -155,9 +142,10 @@ function ExportForm({ filters }: { filters: DispatchFilters }) {
 
   return (
     <form method="get" action="/admin/dispatch/export" className="flex items-center gap-2">
-      {Object.entries(filters).map(([key, value]) =>
-        value ? <input key={key} type="hidden" name={key} value={value} /> : null
-      )}
+      {/* 빈 값도 넘겨야 사용자가 지운 날짜가 오늘 날짜로 되돌아가지 않습니다. */}
+      {Object.entries(filters).map(([key, value]) => (
+        <input key={key} type="hidden" name={key} value={value} />
+      ))}
       <select
         name="template"
         defaultValue={matched.id}

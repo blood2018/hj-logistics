@@ -1,6 +1,10 @@
 import ExcelJS from "exceljs";
 import type { NextRequest } from "next/server";
-import { fetchDispatchRecords, parseDispatchFilters } from "@/app/lib/dispatch";
+import {
+  fetchDispatchRecords,
+  parseDispatchFilters,
+  todayInKorea,
+} from "@/app/lib/dispatch";
 import {
   findTemplate,
   resolveTemplateForCompany,
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest) {
   await template.build(workbook, rows, filters);
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInKorea();
   const fileName = `운송내역_${filters.company || "전체"}_${today}.xlsx`;
 
   return new Response(buffer as ArrayBuffer, {
