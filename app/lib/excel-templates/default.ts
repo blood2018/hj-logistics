@@ -7,6 +7,7 @@ const COLUMNS = [
   { header: "하차지", key: "destination", width: 28 },
   { header: "톤수", key: "tonnage", width: 8 },
   { header: "기사", key: "driver", width: 12 },
+  { header: "기사 전화번호", key: "driver_phone", width: 16 },
   { header: "금액", key: "amount", width: 14 },
 ];
 

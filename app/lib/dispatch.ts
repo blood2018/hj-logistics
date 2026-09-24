@@ -8,6 +8,7 @@ export type DispatchRecord = {
   destination: string;
   tonnage: string;
   driver: string;
+  driver_phone: string;
   amount: number;
   created_at: string;
 };
@@ -20,6 +21,7 @@ export type DispatchFilters = {
   destination: string;
   tonnage: string;
   driver: string;
+  driverPhone: string;
   amountMin: string;
   amountMax: string;
 };
@@ -32,22 +34,10 @@ export const FILTER_KEYS = [
   "destination",
   "tonnage",
   "driver",
+  "driverPhone",
   "amountMin",
   "amountMax",
 ] as const satisfies readonly (keyof DispatchFilters)[];
-
-export const TONNAGE_OPTIONS = [
-  "1톤",
-  "1.4톤",
-  "2.5톤",
-  "3.5톤",
-  "5톤",
-  "8톤",
-  "11톤",
-  "15톤",
-  "18톤",
-  "25톤",
-];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const PAGE_SIZE = 1000;
@@ -97,7 +87,7 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
     let query = supabase
       .from("dispatch_records")
       .select(
-        "id, dispatch_date, company, origin, destination, tonnage, driver, amount, created_at"
+        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, amount, created_at"
       );
 
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);
@@ -108,6 +98,8 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
       query = query.ilike("destination", toContainsPattern(filters.destination));
     if (filters.tonnage) query = query.eq("tonnage", filters.tonnage);
     if (filters.driver) query = query.ilike("driver", toContainsPattern(filters.driver));
+    if (filters.driverPhone)
+      query = query.ilike("driver_phone", toContainsPattern(filters.driverPhone));
     if (filters.amountMin) query = query.gte("amount", Number(filters.amountMin));
     if (filters.amountMax) query = query.lte("amount", Number(filters.amountMax));
 
@@ -123,17 +115,4 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
   }
 
   return rows;
-}
-
-/** 입력 폼/검색 폼의 선택지로 쓰일 기존 회사명 목록 */
-export async function fetchCompanyNames() {
-  const supabase = createSupabaseAdminClient();
-  const { data, error } = await supabase
-    .from("dispatch_records")
-    .select("company")
-    .order("company")
-    .limit(5000);
-
-  if (error) throw error;
-  return [...new Set((data ?? []).map((row) => row.company as string))];
 }

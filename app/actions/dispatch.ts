@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedHeader } from "@/app/lib/admin-auth";
+import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 
 type DispatchField =
@@ -12,6 +13,7 @@ type DispatchField =
   | "destination"
   | "tonnage"
   | "driver"
+  | "driverPhone"
   | "amount";
 
 export type DispatchFormState = {
@@ -21,6 +23,7 @@ export type DispatchFormState = {
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const PHONE_PATTERN = /^[0-9-]{9,13}$/;
 
 // Server Action은 어떤 경로로든 POST 호출될 수 있어 proxy.ts의 /admin 매처만으로는 보호되지 않습니다.
 async function assertAdmin() {
@@ -42,15 +45,18 @@ export async function createDispatchRecord(
   const destination = String(formData.get("destination") ?? "").trim();
   const tonnage = String(formData.get("tonnage") ?? "").trim();
   const driver = String(formData.get("driver") ?? "").trim();
+  const driverPhone = String(formData.get("driverPhone") ?? "").trim();
   const amountRaw = String(formData.get("amount") ?? "").replace(/[,\s원]/g, "");
 
   const fieldErrors: DispatchFormState["fieldErrors"] = {};
   if (!DATE_PATTERN.test(dispatchDate)) fieldErrors.dispatchDate = "날짜를 입력해 주세요.";
-  if (!company) fieldErrors.company = "회사구분을 입력해 주세요.";
+  if (!COMPANY_OPTIONS.includes(company)) fieldErrors.company = "회사구분을 선택해 주세요.";
   if (!origin) fieldErrors.origin = "상차지를 입력해 주세요.";
   if (!destination) fieldErrors.destination = "하차지를 입력해 주세요.";
-  if (!tonnage) fieldErrors.tonnage = "톤수를 입력해 주세요.";
+  if (!TONNAGE_OPTIONS.includes(tonnage)) fieldErrors.tonnage = "톤수를 선택해 주세요.";
   if (!driver) fieldErrors.driver = "기사를 입력해 주세요.";
+  if (!PHONE_PATTERN.test(driverPhone))
+    fieldErrors.driverPhone = "전화번호를 올바르게 입력해 주세요. (예: 010-1234-5678)";
   if (!/^\d+$/.test(amountRaw)) fieldErrors.amount = "금액을 숫자로 입력해 주세요.";
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -66,6 +72,7 @@ export async function createDispatchRecord(
       destination,
       tonnage,
       driver,
+      driver_phone: driverPhone,
       amount: Number(amountRaw),
     });
 

@@ -1,13 +1,12 @@
 import Link from "next/link";
 import {
-  fetchCompanyNames,
   fetchDispatchRecords,
   filtersToQueryString,
   parseDispatchFilters,
-  TONNAGE_OPTIONS,
   type DispatchFilters,
   type DispatchRecord,
 } from "@/app/lib/dispatch";
+import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
 import {
   EXCEL_TEMPLATES,
   resolveTemplateForCompany,
@@ -29,13 +28,9 @@ export default async function DispatchPage({
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 
   let rows: DispatchRecord[] = [];
-  let companies: string[] = [];
   let loadError: string | null = null;
   try {
-    [rows, companies] = await Promise.all([
-      fetchDispatchRecords(filters),
-      fetchCompanyNames(),
-    ]);
+    rows = await fetchDispatchRecords(filters);
   } catch (err) {
     console.error("dispatch_records load failed", err);
     loadError = err instanceof Error ? err.message : "알 수 없는 오류";
@@ -56,16 +51,12 @@ export default async function DispatchPage({
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-900">신규 등록</h2>
-          <DispatchEntryForm
-            companies={companies}
-            tonnageOptions={TONNAGE_OPTIONS}
-            today={today}
-          />
+          <DispatchEntryForm today={today} />
         </section>
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-900">조회</h2>
-          <SearchForm filters={filters} companies={companies} />
+          <SearchForm filters={filters} />
         </section>
 
         <section className="space-y-3">
@@ -91,13 +82,7 @@ export default async function DispatchPage({
   );
 }
 
-function SearchForm({
-  filters,
-  companies,
-}: {
-  filters: DispatchFilters;
-  companies: string[];
-}) {
+function SearchForm({ filters }: { filters: DispatchFilters }) {
   return (
     <form
       method="get"
@@ -112,7 +97,7 @@ function SearchForm({
       <Field label="회사구분">
         <select name="company" defaultValue={filters.company} className={`${inputClass} bg-white`}>
           <option value="">전체</option>
-          {companies.map((company) => (
+          {COMPANY_OPTIONS.map((company) => (
             <option key={company} value={company}>
               {company}
             </option>
@@ -138,13 +123,16 @@ function SearchForm({
       <Field label="기사 (포함)">
         <input type="text" name="driver" defaultValue={filters.driver} className={inputClass} />
       </Field>
+      <Field label="기사 전화번호 (포함)">
+        <input type="text" name="driverPhone" defaultValue={filters.driverPhone} className={inputClass} />
+      </Field>
       <Field label="최소 금액">
         <input type="number" min={0} name="amountMin" defaultValue={filters.amountMin} className={inputClass} />
       </Field>
       <Field label="최대 금액">
         <input type="number" min={0} name="amountMax" defaultValue={filters.amountMax} className={inputClass} />
       </Field>
-      <div className="col-span-2 flex items-end gap-2 md:col-span-3 lg:col-span-3 lg:justify-end">
+      <div className="col-span-2 flex items-end gap-2 md:col-span-4 lg:col-span-2 lg:justify-end">
         <Link
           href="/admin/dispatch"
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
@@ -195,7 +183,7 @@ function ExportForm({ filters }: { filters: DispatchFilters }) {
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[860px] text-left text-sm">
+      <table className="w-full min-w-[980px] text-left text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500">
           <tr>
             <th className="px-4 py-3">날짜</th>
@@ -204,6 +192,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             <th className="px-4 py-3">하차지</th>
             <th className="px-4 py-3">톤수</th>
             <th className="px-4 py-3">기사</th>
+            <th className="px-4 py-3">기사 전화번호</th>
             <th className="px-4 py-3 text-right">금액</th>
             <th className="px-4 py-3" />
           </tr>
@@ -217,6 +206,13 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
               <td className="px-4 py-3 text-slate-900">{row.destination}</td>
               <td className="px-4 py-3 text-slate-900">{row.tonnage}</td>
               <td className="px-4 py-3 text-slate-900">{row.driver}</td>
+              <td className="whitespace-nowrap px-4 py-3">
+                {row.driver_phone && (
+                  <a href={`tel:${row.driver_phone}`} className="text-blue-700 hover:underline">
+                    {row.driver_phone}
+                  </a>
+                )}
+              </td>
               <td className="px-4 py-3 text-right tabular-nums text-slate-900">
                 {won.format(Number(row.amount))}
               </td>
@@ -228,7 +224,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
 
           {rows.length === 0 && (
             <tr>
-              <td colSpan={8} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
                 조건에 맞는 운송 내역이 없습니다.
               </td>
             </tr>

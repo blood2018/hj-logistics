@@ -5,6 +5,7 @@ import {
   createDispatchRecord,
   type DispatchFormState,
 } from "@/app/actions/dispatch";
+import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
 
 const initialState: DispatchFormState = { status: "idle", message: "" };
 
@@ -12,17 +13,16 @@ const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 aria-invalid:border-red-400";
 
 // 연속 입력 시 날짜·회사구분은 그대로 두고 나머지만 비웁니다.
-const RESET_FIELDS = ["origin", "destination", "tonnage", "driver", "amount"];
+const RESET_FIELDS = [
+  "origin",
+  "destination",
+  "tonnage",
+  "driver",
+  "driverPhone",
+  "amount",
+];
 
-export default function DispatchEntryForm({
-  companies,
-  tonnageOptions,
-  today,
-}: {
-  companies: string[];
-  tonnageOptions: string[];
-  today: string;
-}) {
+export default function DispatchEntryForm({ today }: { today: string }) {
   const [state, formAction, pending] = useActionState(
     createDispatchRecord,
     initialState
@@ -35,7 +35,9 @@ export default function DispatchEntryForm({
     if (state.status !== "success" || !form) return;
     for (const name of RESET_FIELDS) {
       const input = form.elements.namedItem(name);
-      if (input instanceof HTMLInputElement) input.value = "";
+      if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
+        input.value = "";
+      }
     }
     (form.elements.namedItem("origin") as HTMLInputElement | null)?.focus();
   }, [state]);
@@ -70,16 +72,20 @@ export default function DispatchEntryForm({
       name: "company",
       label: "회사구분",
       render: (invalid) => (
-        <input
+        <select
           id="company"
           name="company"
-          type="text"
-          list="company-options"
-          autoComplete="off"
-          placeholder="회사명"
+          defaultValue=""
           aria-invalid={invalid}
-          className={inputClass}
-        />
+          className={`${inputClass} bg-white`}
+        >
+          <option value="">선택</option>
+          {COMPANY_OPTIONS.map((company) => (
+            <option key={company} value={company}>
+              {company}
+            </option>
+          ))}
+        </select>
       ),
     },
     {
@@ -114,16 +120,20 @@ export default function DispatchEntryForm({
       name: "tonnage",
       label: "톤수",
       render: (invalid) => (
-        <input
+        <select
           id="tonnage"
           name="tonnage"
-          type="text"
-          list="tonnage-options"
-          autoComplete="off"
-          placeholder="예: 5톤"
+          defaultValue=""
           aria-invalid={invalid}
-          className={inputClass}
-        />
+          className={`${inputClass} bg-white`}
+        >
+          <option value="">선택</option>
+          {TONNAGE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       ),
     },
     {
@@ -135,6 +145,20 @@ export default function DispatchEntryForm({
           name="driver"
           type="text"
           placeholder="기사명"
+          aria-invalid={invalid}
+          className={inputClass}
+        />
+      ),
+    },
+    {
+      name: "driverPhone",
+      label: "기사 전화번호",
+      render: (invalid) => (
+        <input
+          id="driverPhone"
+          name="driverPhone"
+          type="tel"
+          placeholder="010-1234-5678"
           aria-invalid={invalid}
           className={inputClass}
         />
@@ -163,18 +187,7 @@ export default function DispatchEntryForm({
       onSubmit={handleSubmit}
       className="rounded-xl border border-slate-200 bg-white p-5"
     >
-      <datalist id="company-options">
-        {companies.map((company) => (
-          <option key={company} value={company} />
-        ))}
-      </datalist>
-      <datalist id="tonnage-options">
-        {tonnageOptions.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         {fields.map(({ name, label, render }) => (
           <div key={name} className="flex flex-col gap-1">
             <label htmlFor={name} className="text-xs font-medium text-slate-600">
