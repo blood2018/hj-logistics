@@ -1,45 +1,42 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import type ExcelJS from "exceljs";
 import type { ExcelTemplate } from "./types";
 
-// templates/락텍.xls 양식을 재현합니다.
-// 원본이 구형 .xls라 파일을 직접 불러오지 않고 서식을 코드로 옮겼습니다.
-//   B1:L1  제목 "YY년 MM월 (홍진물류)락텍운송내역"
+// 락텍 원본 양식(files/roctec.xlsx)을 불러와 데이터만 채웁니다.
+// 양식 파일 구성 (원본에서 실제 데이터만 지운 것):
+//   B1     제목 "YY년 MM월 (홍진물류)락텍운송내역"
 //   3행    일자 | 출지 | 착지 | 톤수 | 운송사 | 단가 | 횟수 | 운반비 | 비고   (C~K열)
-//   4행~   같은 날짜의 두 번째 줄부터는 일자를 비웁니다. 비고에 차량번호, L열(테두리 밖)에 기사명.
-//   마지막 합계 | … | 운반비 합계 | VAT 별도
+//   4행    데이터 행 서식 견본 (L열은 테두리 밖 기사명)
+//   5행    합계 행 서식 견본 ("합계" … 운반비 합계 | "VAT 별도")
+// 양식을 바꾸려면 같은 구성으로 files/roctec.xlsx를 교체하면 됩니다.
 
-const FONT = { name: "돋움", size: 11 };
-const thin = { style: "thin" as const };
-const BORDER = { top: thin, left: thin, bottom: thin, right: thin };
-const CENTER = { horizontal: "center" as const, vertical: "middle" as const };
+const TEMPLATE_PATH = path.join(process.cwd(), "app/lib/excel-templates/files/roctec.xlsx");
+const DATA_ROW = 4;
+const TOTAL_ROW = 5;
+const LAST_COL = 13; // M
 
-const NUM_FMT = '_-* #,##0_-;\\-* #,##0_-;_-* "-"_-;_-@_-';
-const WON_FMT = '_-"₩"* #,##0_-;\\-"₩"* #,##0_-;_-"₩"* "-"_-;_-@_-';
-const DATE_FMT = 'mm"월" dd"일"';
+type RowStyle = { height: number | undefined; styles: Partial<ExcelJS.Style>[] };
 
-const COLUMN_WIDTHS: Record<string, number> = {
-  A: 3,
-  B: 10.2,
-  C: 12.7,
-  D: 12.3,
-  E: 15,
-  F: 6.9,
-  G: 11.9,
-  H: 11.9,
-  I: 11.9,
-  J: 14.8,
-  K: 21.9,
-  L: 16.6,
-};
+function snapshotRow(sheet: ExcelJS.Worksheet, rowNumber: number): RowStyle {
+  const row = sheet.getRow(rowNumber);
+  return {
+    height: row.height,
+    styles: Array.from({ length: LAST_COL }, (_, i) =>
+      structuredClone(row.getCell(i + 1).style ?? {})
+    ),
+  };
+}
 
-const HEADERS = ["일자", "출지", "착지", "톤수", "운송사", "단가", "횟수", "운반비", "비고"];
-const FIRST_COL = 3; // C
-const HEADER_ROW = 3;
-
-function styleCell(cell: ExcelJS.Cell, options: { bold?: boolean; border?: boolean } = {}) {
-  cell.font = { ...FONT, bold: options.bold ?? false };
-  cell.alignment = CENTER;
-  if (options.border !== false) cell.border = BORDER;
+function applyRowStyle(sheet: ExcelJS.Worksheet, rowNumber: number, rowStyle: RowStyle) {
+  const row = sheet.getRow(rowNumber);
+  if (rowStyle.height) row.height = rowStyle.height;
+  rowStyle.styles.forEach((style, i) => {
+    const cell = row.getCell(i + 1);
+    cell.value = null;
+    cell.style = structuredClone(style);
+  });
+  return row;
 }
 
 function toExcelDate(isoDate: string) {
@@ -51,82 +48,52 @@ export const roctecTemplate: ExcelTemplate = {
   id: "roctec",
   label: "락텍 양식",
   companies: ["락텍"],
-  build(workbook, rows, filters) {
+  async build(workbook, rows, filters) {
+    // exceljs 타입 정의의 Buffer가 최신 @types/node의 Buffer와 맞지 않아 캐스팅합니다.
+    await workbook.xlsx.load((await readFile(TEMPLATE_PATH)) as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    const sheet = workbook.worksheets[0];
+
     const ordered = [...rows].reverse(); // 날짜 오름차순
     const baseDate = filters.dateFrom || ordered[0]?.dispatch_date || filters.dateTo;
     const [year, month] = (baseDate || new Date().toISOString().slice(0, 10)).split("-");
 
-    const sheet = workbook.addWorksheet(`${year}.${month}`, {
-      pageSetup: { paperSize: 9, orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-    });
-    for (const [col, width] of Object.entries(COLUMN_WIDTHS)) {
-      sheet.getColumn(col).width = width;
-    }
+    sheet.name = `${year}.${month}`;
+    sheet.getCell("B1").value = `${year.slice(2)}년  ${month}월 (홍진물류)락텍운송내역`;
 
-    sheet.getRow(1).height = 21.75;
-    sheet.getRow(2).height = 24;
-    sheet.mergeCells("B1:L1");
-    const title = sheet.getCell("B1");
-    title.value = `${year.slice(2)}년  ${month}월 (홍진물류)락텍운송내역`;
-    styleCell(title, { bold: true, border: false });
+    const dataStyle = snapshotRow(sheet, DATA_ROW);
+    const totalStyle = snapshotRow(sheet, TOTAL_ROW);
 
-    const headerRow = sheet.getRow(HEADER_ROW);
-    headerRow.height = 27;
-    HEADERS.forEach((header, i) => {
-      const cell = headerRow.getCell(FIRST_COL + i);
-      cell.value = header;
-      styleCell(cell, { bold: true });
-    });
-
-    let rowNumber = HEADER_ROW + 1;
+    let rowNumber = DATA_ROW;
     let previousDate: string | null = null;
     for (const record of ordered) {
-      const row = sheet.getRow(rowNumber);
-      row.height = 27;
+      const row = applyRowStyle(sheet, rowNumber, dataStyle);
+      const amount = Number(record.amount);
 
-      const values: ExcelJS.CellValue[] = [
-        record.dispatch_date === previousDate ? null : toExcelDate(record.dispatch_date),
-        record.origin,
-        record.destination,
-        record.tonnage,
-        "홍진물류",
-        Number(record.amount),
-        1,
-        { formula: `H${rowNumber}*I${rowNumber}`, result: Number(record.amount) },
-        record.vehicle_number, // 비고
-      ];
-      values.forEach((value, i) => {
-        const cell = row.getCell(FIRST_COL + i);
-        cell.value = value;
-        styleCell(cell);
-      });
-      row.getCell("C").numFmt = DATE_FMT;
-      row.getCell("H").numFmt = NUM_FMT;
-      row.getCell("J").numFmt = WON_FMT;
-      row.getCell("K").font = { ...FONT, bold: true };
-
-      const driverCell = row.getCell("L");
-      driverCell.value = record.driver;
-      styleCell(driverCell, { border: false });
+      row.getCell("C").value =
+        record.dispatch_date === previousDate ? null : toExcelDate(record.dispatch_date);
+      row.getCell("D").value = record.origin;
+      row.getCell("E").value = record.destination;
+      row.getCell("F").value = record.tonnage;
+      row.getCell("G").value = "홍진물류";
+      row.getCell("H").value = amount;
+      row.getCell("I").value = 1;
+      row.getCell("J").value = { formula: `H${rowNumber}*I${rowNumber}`, result: amount };
+      row.getCell("K").value = record.vehicle_number || null;
+      row.getCell("L").value = record.driver || null;
 
       previousDate = record.dispatch_date;
       rowNumber += 1;
     }
 
-    const totalRow = sheet.getRow(rowNumber);
-    totalRow.height = 27;
-    for (let col = FIRST_COL; col < FIRST_COL + HEADERS.length; col++) {
-      styleCell(totalRow.getCell(col));
-    }
-    totalRow.getCell("C").value = "합계";
+    const totalRow = applyRowStyle(sheet, rowNumber, totalStyle);
     const total = rows.reduce((sum, record) => sum + Number(record.amount), 0);
-    const totalCell = totalRow.getCell("J");
-    totalCell.value =
-      rowNumber > HEADER_ROW + 1
-        ? { formula: `SUM(J${HEADER_ROW + 1}:J${rowNumber - 1})`, result: total }
+    totalRow.getCell("C").value = "합계";
+    totalRow.getCell("J").value =
+      rowNumber > DATA_ROW
+        ? { formula: `SUM(J${DATA_ROW}:J${rowNumber - 1})`, result: total }
         : 0;
-    totalCell.numFmt = WON_FMT;
-    totalCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFF00" } };
     totalRow.getCell("K").value = "VAT 별도";
+
+    sheet.pageSetup.printArea = `A1:L${rowNumber}`;
   },
 };
