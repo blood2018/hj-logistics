@@ -21,6 +21,10 @@ export async function GET(request: NextRequest) {
   let rows;
   try {
     rows = await fetchDispatchRecords(filters);
+    // 회사 전용 양식은 조회 결과 중 그 회사 건만 담습니다 (기본 양식은 전체).
+    if (template.companies.length > 0) {
+      rows = rows.filter((row) => template.companies.includes(row.company));
+    }
   } catch (err) {
     console.error("dispatch_records export failed", err);
     return new Response("데이터를 불러오지 못했습니다.", { status: 500 });
@@ -33,7 +37,8 @@ export async function GET(request: NextRequest) {
 
   const buffer = await workbook.xlsx.writeBuffer();
   const today = todayInKorea();
-  const fileName = `운송내역_${filters.company || "전체"}_${today}.xlsx`;
+  const label = template.companies.join("_") || filters.company || "전체";
+  const fileName = `운송내역_${label}_${today}.xlsx`;
 
   return new Response(buffer as ArrayBuffer, {
     headers: {
