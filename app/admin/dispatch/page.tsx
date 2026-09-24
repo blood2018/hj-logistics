@@ -218,197 +218,93 @@ function PeriodPresets({ filters }: { filters: DispatchFilters }) {
   );
 }
 
-const COMPANY_BADGE: Record<string, string> = {
-  센시텍: "bg-sky-50 text-sky-700 ring-sky-200",
-  락텍: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  롯데케미칼: "bg-rose-50 text-rose-700 ring-rose-200",
-};
-
-function CompanyBadge({ company }: { company: string }) {
-  return (
-    <span
-      className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
-        COMPANY_BADGE[company] ?? "bg-slate-50 text-slate-700 ring-slate-200"
-      }`}
-    >
-      {company}
-    </span>
-  );
-}
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-
-function formatDayHeader(isoDate: string) {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  const weekday = WEEKDAYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
-  const label = `${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")} (${weekday})`;
-  return { label, year: y, weekday };
-}
-
-/** 정렬된 목록을 같은 날짜끼리 묶습니다. */
-function groupByDate(rows: DispatchRecord[]) {
-  const groups: { date: string; rows: DispatchRecord[] }[] = [];
-  for (const row of rows) {
-    const last = groups.at(-1);
-    if (last?.date === row.dispatch_date) last.rows.push(row);
-    else groups.push({ date: row.dispatch_date, rows: [row] });
-  }
-  return groups;
-}
-
-const COLUMN_COUNT = 8;
-
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
-  const groups = groupByDate(rows);
-  const currentYear = Number(todayInKorea().slice(0, 4));
-
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[980px] text-left text-sm">
+      <table className="w-full min-w-[1100px] text-left text-sm">
         <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[inset_0_-1px_0_0_var(--color-slate-200)]">
           <tr>
-            <th className="w-24 px-4 py-3">날짜</th>
-            <th className="w-32 px-4 py-3">회사구분</th>
+            <th className="px-4 py-3">날짜</th>
+            <th className="px-4 py-3">회사구분</th>
             <th className="px-4 py-3">상차지</th>
             <th className="px-4 py-3">하차지</th>
-            <th className="w-20 px-4 py-3">톤수</th>
-            <th className="w-56 px-4 py-3">기사 · 차량</th>
-            <th className="w-32 px-4 py-3 text-right">금액</th>
-            <th className="w-16 px-4 py-3" />
+            <th className="px-4 py-3">톤수</th>
+            <th className="px-4 py-3">기사</th>
+            <th className="px-4 py-3">기사 전화번호</th>
+            <th className="px-4 py-3">차량번호</th>
+            <th className="px-4 py-3 text-right">금액</th>
+            <th className="px-4 py-3" />
           </tr>
         </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map((row) => (
+            <tr key={row.id} className="transition-colors even:bg-slate-50/60 hover:bg-blue-50/40">
+              <EditableCell
+                id={row.id}
+                column="dispatch_date"
+                value={row.dispatch_date}
+                input="date"
+                className="whitespace-nowrap text-slate-500"
+              />
+              <EditableCell
+                id={row.id}
+                column="company"
+                value={row.company}
+                input="select"
+                options={COMPANY_OPTIONS}
+                className="text-slate-900"
+              />
+              <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
+              <EditableCell
+                id={row.id}
+                column="destination"
+                value={row.destination}
+                className="text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
+                column="tonnage"
+                value={row.tonnage}
+                input="select"
+                options={TONNAGE_OPTIONS}
+                className="text-slate-900"
+              />
+              <EditableCell id={row.id} column="driver" value={row.driver} className="text-slate-900" />
+              <EditableCell
+                id={row.id}
+                column="driver_phone"
+                value={row.driver_phone}
+                input="tel"
+                className="whitespace-nowrap text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
+                column="vehicle_number"
+                value={row.vehicle_number}
+                className="whitespace-nowrap text-slate-900"
+              />
+              <EditableCell
+                id={row.id}
+                column="amount"
+                value={String(row.amount)}
+                display={won.format(Number(row.amount))}
+                input="number"
+                className="text-right tabular-nums text-slate-900"
+              />
+              <td className="px-4 py-3 text-right">
+                <DeleteButton id={row.id} />
+              </td>
+            </tr>
+          ))}
 
-        {groups.map((group) => {
-          const day = formatDayHeader(group.date);
-          const subtotal = group.rows.reduce((sum, row) => sum + Number(row.amount), 0);
-          const dayColor =
-            day.weekday === "일"
-              ? "text-rose-600"
-              : day.weekday === "토"
-                ? "text-blue-600"
-                : "text-slate-800";
-
-          return (
-            <tbody key={group.date} className="border-b border-slate-200 last:border-b-0">
-              <tr className="bg-slate-100/70">
-                <td colSpan={COLUMN_COUNT - 2} className="px-4 py-2">
-                  <span className={`font-semibold ${dayColor}`}>
-                    {day.year !== currentYear && `${day.year}. `}
-                    {day.label}
-                  </span>
-                  <span className="ml-2 text-xs text-slate-500">{group.rows.length}건</span>
-                </td>
-                <td className="px-4 py-2 text-right font-semibold tabular-nums text-slate-800">
-                  {won.format(subtotal)}
-                </td>
-                <td />
-              </tr>
-
-              {group.rows.map((row, index) => (
-                <tr
-                  key={row.id}
-                  className={`transition-colors hover:bg-blue-50/40 ${
-                    index % 2 === 1 ? "bg-slate-50/60" : ""
-                  }`}
-                >
-                  <EditableCell
-                    id={row.id}
-                    column="dispatch_date"
-                    value={row.dispatch_date}
-                    display={row.dispatch_date.slice(5).replace("-", ".")}
-                    input="date"
-                    className="whitespace-nowrap tabular-nums text-slate-400"
-                  />
-                  <EditableCell
-                    id={row.id}
-                    column="company"
-                    value={row.company}
-                    display={<CompanyBadge company={row.company} />}
-                    input="select"
-                    options={COMPANY_OPTIONS}
-                  />
-                  <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
-                  <EditableCell
-                    id={row.id}
-                    column="destination"
-                    value={row.destination}
-                    className="text-slate-900"
-                  />
-                  <EditableCell
-                    id={row.id}
-                    column="tonnage"
-                    value={row.tonnage}
-                    input="select"
-                    options={TONNAGE_OPTIONS}
-                    className="whitespace-nowrap text-slate-900"
-                  />
-                  <td className="px-4 py-2">
-                    <EditableCell
-                      as="div"
-                      id={row.id}
-                      column="vehicle_number"
-                      value={row.vehicle_number}
-                      className="whitespace-nowrap font-medium text-slate-900"
-                    />
-                    <div className="flex items-center gap-1 text-xs text-slate-500">
-                      {row.driver || row.driver_phone ? (
-                        <>
-                          <EditableCell
-                            as="div"
-                            id={row.id}
-                            column="driver"
-                            value={row.driver}
-                            className="whitespace-nowrap"
-                          />
-                          <span className="text-slate-300">·</span>
-                          <EditableCell
-                            as="div"
-                            id={row.id}
-                            column="driver_phone"
-                            value={row.driver_phone}
-                            input="tel"
-                            className="whitespace-nowrap tabular-nums"
-                          />
-                        </>
-                      ) : (
-                        // 기사 정보가 없으면 한 칸만 보여주고, 더블클릭하면 기사명을 입력합니다.
-                        <EditableCell
-                          as="div"
-                          id={row.id}
-                          column="driver"
-                          value=""
-                          display={<span className="text-slate-400">기사 미입력</span>}
-                          className="whitespace-nowrap"
-                        />
-                      )}
-                    </div>
-                  </td>
-                  <EditableCell
-                    id={row.id}
-                    column="amount"
-                    value={String(row.amount)}
-                    display={won.format(Number(row.amount))}
-                    input="number"
-                    className="text-right tabular-nums text-slate-900"
-                  />
-                  <td className="px-4 py-3 text-right">
-                    <DeleteButton id={row.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          );
-        })}
-
-        {rows.length === 0 && (
-          <tbody>
+          {rows.length === 0 && (
             <tr>
-              <td colSpan={COLUMN_COUNT} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
                 조건에 맞는 운송 내역이 없습니다.
               </td>
             </tr>
-          </tbody>
-        )}
+          )}
+        </tbody>
       </table>
     </div>
   );

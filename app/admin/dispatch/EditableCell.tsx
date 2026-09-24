@@ -10,13 +10,11 @@ type EditableCellProps = {
   id: string;
   column: DispatchColumn;
   value: string;
-  /** 보기 모드에서 표시할 내용 (예: 금액 천 단위 쉼표, 회사 뱃지). 없으면 value를 그대로 표시합니다. */
-  display?: React.ReactNode;
+  /** 보기 모드에서 표시할 값 (예: 금액 천 단위 쉼표). 없으면 value를 그대로 표시합니다. */
+  display?: string;
   input?: "text" | "date" | "tel" | "number" | "select";
   options?: string[];
   className?: string;
-  /** "td"는 표 셀 하나, "div"는 한 셀 안에 여러 값을 쌓을 때 씁니다. */
-  as?: "td" | "div";
 };
 
 const fieldClass =
@@ -31,7 +29,6 @@ export default function EditableCell({
   input = "text",
   options = [],
   className = "",
-  as: Wrapper = "td",
 }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -79,26 +76,20 @@ export default function EditableCell({
     }
   }
 
-  const isCell = Wrapper === "td";
-
   if (!editing) {
     return (
-      <Wrapper
+      <td
         onDoubleClick={startEditing}
         title="더블클릭하여 수정"
-        className={`cursor-pointer select-none hover:bg-blue-50 ${
-          isCell ? "px-4 py-3" : "-mx-1 rounded px-1"
-        } ${className}`}
+        className={`cursor-pointer select-none px-4 py-3 hover:bg-blue-50 ${className}`}
       >
-        {display ?? (value || <span className="text-slate-300">–</span>)}
-      </Wrapper>
+        {display ?? value}
+      </td>
     );
   }
 
   return (
-    <Wrapper
-      className={`${isCell ? "px-2 py-2 align-top" : "py-0.5"} ${pending ? "opacity-60" : ""}`}
-    >
+    <td className={`px-2 py-2 align-top ${pending ? "opacity-60" : ""}`}>
       {input === "select" ? (
         <select
           autoFocus
@@ -133,6 +124,6 @@ export default function EditableCell({
         />
       )}
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </Wrapper>
+    </td>
   );
 }
