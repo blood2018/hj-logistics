@@ -45,6 +45,33 @@ export function todayInKorea() {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 }
 
+function shiftDate(isoDate: string, days: number) {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+function monthRange(year: number, monthIndex: number) {
+  const first = new Date(Date.UTC(year, monthIndex, 1));
+  const last = new Date(Date.UTC(year, monthIndex + 1, 0));
+  return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) };
+}
+
+/** 조회 화면의 기간 빠른 선택 버튼 (한국 시간 기준, 주는 월~일) */
+export function periodPresets(today = todayInKorea()) {
+  const [y, m, d] = today.split("-").map(Number);
+  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=일
+  const monday = shiftDate(today, -((weekday + 6) % 7));
+  const yesterday = shiftDate(today, -1);
+
+  return [
+    { label: "오늘", from: today, to: today },
+    { label: "어제", from: yesterday, to: yesterday },
+    { label: "이번 주", from: monday, to: shiftDate(monday, 6) },
+    { label: "이번 달", ...monthRange(y, m - 1) },
+    { label: "지난달", ...monthRange(y, m - 2) },
+  ];
+}
+
 /**
  * URL 파라미터를 조회 조건으로 바꿉니다.
  * 시작일·종료일 파라미터가 아예 없으면 오늘 날짜를 쓰고, 빈 값으로 오면(사용자가 지운 경우) 기간 제한 없이 조회합니다.
