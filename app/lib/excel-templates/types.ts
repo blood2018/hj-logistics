@@ -8,6 +8,8 @@ export type ExcelTemplate = {
   label: string;
   /** 이 양식을 기본으로 사용하는 회사명 목록 (회사구분 값과 정확히 일치해야 합니다) */
   companies: string[];
+  /** 조회 화면의 회사 그룹 이름 (예: "창원공동물류센터"). 그룹으로 조회하면 이 양식이 선택됩니다. */
+  group?: string;
   /** 워크북에 시트를 채웁니다 */
   build: (
     workbook: ExcelJS.Workbook,

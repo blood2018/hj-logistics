@@ -1,6 +1,10 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import type ExcelJS from "exceljs";
+import {
+  applyRowStyle,
+  loadTemplateFile,
+  reportYearMonth,
+  snapshotRow,
+  toExcelDate,
+} from "./shared";
 import type { ExcelTemplate } from "./types";
 
 // 락텍 원본 양식(files/roctec.xlsx)을 불러와 데이터만 채웁니다.
@@ -11,57 +15,25 @@ import type { ExcelTemplate } from "./types";
 //   5행    합계 행 서식 견본 ("합계" … 운반비 합계 | "VAT 별도")
 // 양식을 바꾸려면 같은 구성으로 files/roctec.xlsx를 교체하면 됩니다.
 
-const TEMPLATE_PATH = path.join(process.cwd(), "app/lib/excel-templates/files/roctec.xlsx");
 const DATA_ROW = 4;
 const TOTAL_ROW = 5;
 const LAST_COL = 13; // M
-
-type RowStyle = { height: number | undefined; styles: Partial<ExcelJS.Style>[] };
-
-function snapshotRow(sheet: ExcelJS.Worksheet, rowNumber: number): RowStyle {
-  const row = sheet.getRow(rowNumber);
-  return {
-    height: row.height,
-    styles: Array.from({ length: LAST_COL }, (_, i) =>
-      structuredClone(row.getCell(i + 1).style ?? {})
-    ),
-  };
-}
-
-function applyRowStyle(sheet: ExcelJS.Worksheet, rowNumber: number, rowStyle: RowStyle) {
-  const row = sheet.getRow(rowNumber);
-  if (rowStyle.height) row.height = rowStyle.height;
-  rowStyle.styles.forEach((style, i) => {
-    const cell = row.getCell(i + 1);
-    cell.value = null;
-    cell.style = structuredClone(style);
-  });
-  return row;
-}
-
-function toExcelDate(isoDate: string) {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d));
-}
 
 export const roctecTemplate: ExcelTemplate = {
   id: "roctec",
   label: "락텍 양식",
   companies: ["락텍"],
   async build(workbook, rows, filters) {
-    // exceljs 타입 정의의 Buffer가 최신 @types/node의 Buffer와 맞지 않아 캐스팅합니다.
-    await workbook.xlsx.load((await readFile(TEMPLATE_PATH)) as unknown as Parameters<typeof workbook.xlsx.load>[0]);
-    const sheet = workbook.worksheets[0];
+    const sheet = await loadTemplateFile(workbook, "roctec.xlsx");
 
     const ordered = [...rows].reverse(); // 날짜 오름차순
-    const baseDate = filters.dateFrom || ordered[0]?.dispatch_date || filters.dateTo;
-    const [year, month] = (baseDate || new Date().toISOString().slice(0, 10)).split("-");
+    const { year, month } = reportYearMonth(filters.dateFrom, filters.dateTo, ordered[0]?.dispatch_date);
 
     sheet.name = `${year}.${month}`;
     sheet.getCell("B1").value = `${year.slice(2)}년  ${month}월 (홍진물류)락텍운송내역`;
 
-    const dataStyle = snapshotRow(sheet, DATA_ROW);
-    const totalStyle = snapshotRow(sheet, TOTAL_ROW);
+    const dataStyle = snapshotRow(sheet, DATA_ROW, LAST_COL);
+    const totalStyle = snapshotRow(sheet, TOTAL_ROW, LAST_COL);
 
     let rowNumber = DATA_ROW;
     let previousDate: string | null = null;
