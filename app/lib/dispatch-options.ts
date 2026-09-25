@@ -17,4 +17,8 @@ export const COMPANY_OPTIONS = [
   "MMC",
 ];
 
-export const TONNAGE_OPTIONS = ["1톤", "1.4톤", "2.5톤", "3.5톤", "5톤"];
+/** 톤수는 직접 입력합니다. 숫자만 입력하면 "톤"을 붙여 "5" → "5톤"처럼 표기를 맞춥니다. */
+export function normalizeTonnage(raw: string) {
+  const value = raw.trim().replace(/\s+/g, "");
+  return /^\d+(\.\d+)?$/.test(value) ? `${value}톤` : value;
+}

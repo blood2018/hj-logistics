@@ -5,7 +5,7 @@ import {
   createDispatchRecord,
   type DispatchFormState,
 } from "@/app/actions/dispatch";
-import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
 
 type FieldName = keyof NonNullable<DispatchFormState["fieldErrors"]>;
 
@@ -42,7 +42,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
         input.value = "";
       }
     }
-    (form.elements.namedItem("tonnage") as HTMLSelectElement | null)?.focus();
+    (form.elements.namedItem("tonnage") as HTMLInputElement | null)?.focus();
   }, [state]);
 
   // form action 대신 onSubmit을 써서, 검증 실패 시 React가 입력값을 초기화하지 않도록 합니다.
@@ -89,20 +89,15 @@ export default function DispatchEntryForm({ today }: { today: string }) {
             </select>
           </Field>
           <Field name="tonnage" label="톤수" required error={fieldErrors.tonnage}>
-            <select
+            <input
               id="tonnage"
               name="tonnage"
-              defaultValue=""
+              type="text"
+              autoComplete="off"
+              placeholder="예: 5톤"
               aria-invalid={invalid("tonnage")}
               className={inputClass}
-            >
-              <option value="">선택하세요</option>
-              {TONNAGE_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            />
           </Field>
           <Field name="amount" label="금액" required error={fieldErrors.amount}>
             <div className="relative">

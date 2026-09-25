@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
+import { normalizeTonnage } from "@/app/lib/dispatch-options";
 
 export type DispatchRecord = {
   id: string;
@@ -93,6 +94,7 @@ export function parseDispatchFilters(params: SearchParamsLike): DispatchFilters 
 
   if (filters.dateFrom && !DATE_PATTERN.test(filters.dateFrom)) filters.dateFrom = "";
   if (filters.dateTo && !DATE_PATTERN.test(filters.dateTo)) filters.dateTo = "";
+  filters.tonnage = normalizeTonnage(filters.tonnage);
 
   return filters;
 }

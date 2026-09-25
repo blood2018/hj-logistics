@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedHeader } from "@/app/lib/admin-auth";
-import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS, normalizeTonnage } from "@/app/lib/dispatch-options";
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 
 type DispatchField =
@@ -66,7 +66,7 @@ const FIELD_RULES: Record<
   tonnage: {
     column: "tonnage",
     parse: (raw) =>
-      TONNAGE_OPTIONS.includes(raw) ? { value: raw } : { error: "톤수를 선택해 주세요." },
+      normalizeTonnage(raw) ? { value: normalizeTonnage(raw) } : { error: "톤수를 입력해 주세요." },
   },
   driver: {
     column: "driver",

@@ -8,7 +8,7 @@ import {
   type DispatchFilters,
   type DispatchRecord,
 } from "@/app/lib/dispatch";
-import { COMPANY_OPTIONS, TONNAGE_OPTIONS } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
 import {
   EXCEL_TEMPLATES,
   resolveTemplateForCompany,
@@ -122,14 +122,7 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
         </select>
       </Field>
       <Field label="톤수">
-        <select name="tonnage" defaultValue={filters.tonnage} className={`${inputClass} bg-white`}>
-          <option value="">전체</option>
-          {TONNAGE_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <input type="text" name="tonnage" defaultValue={filters.tonnage} className={inputClass} />
       </Field>
       <Field label="기사">
         <input type="text" name="driver" defaultValue={filters.driver} className={inputClass} />
@@ -265,8 +258,6 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                 id={row.id}
                 column="tonnage"
                 value={row.tonnage}
-                input="select"
-                options={TONNAGE_OPTIONS}
                 className="text-slate-900"
               />
               <EditableCell id={row.id} column="driver" value={row.driver} className="text-slate-900" />
