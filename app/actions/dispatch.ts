@@ -65,8 +65,7 @@ const FIELD_RULES: Record<
   },
   tonnage: {
     column: "tonnage",
-    parse: (raw) =>
-      normalizeTonnage(raw) ? { value: normalizeTonnage(raw) } : { error: "톤수를 입력해 주세요." },
+    parse: (raw) => ({ value: normalizeTonnage(raw) }), // 선택 입력
   },
   driver: {
     column: "driver",

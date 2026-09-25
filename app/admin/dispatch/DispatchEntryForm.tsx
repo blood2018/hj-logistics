@@ -88,7 +88,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
               ))}
             </select>
           </Field>
-          <Field name="tonnage" label="톤수" required error={fieldErrors.tonnage}>
+          <Field name="tonnage" label="톤수" error={fieldErrors.tonnage}>
             <input
               id="tonnage"
               name="tonnage"
