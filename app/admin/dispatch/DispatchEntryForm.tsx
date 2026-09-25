@@ -99,7 +99,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
               className={inputClass}
             />
           </Field>
-          <Field name="amount" label="금액" required error={fieldErrors.amount}>
+          <Field name="amount" label="청구금액" required error={fieldErrors.amount}>
             <div className="relative">
               <input
                 id="amount"

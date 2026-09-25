@@ -225,7 +225,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             <th className="px-4 py-3">기사</th>
             <th className="px-4 py-3">기사 전화번호</th>
             <th className="px-4 py-3">차량번호</th>
-            <th className="px-4 py-3 text-right">금액</th>
+            <th className="px-4 py-3 text-right">청구금액</th>
             <th className="px-4 py-3" />
           </tr>
         </thead>

@@ -90,7 +90,7 @@ const FIELD_RULES: Record<
       const digits = raw.replace(/[,\s원]/g, "");
       return /^\d+$/.test(digits)
         ? { value: Number(digits) }
-        : { error: "금액을 숫자로 입력해 주세요." };
+        : { error: "청구금액을 숫자로 입력해 주세요." };
     },
   },
 };
