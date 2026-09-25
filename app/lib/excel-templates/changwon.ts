@@ -13,15 +13,11 @@ import type { ExcelTemplate } from "./types";
 //   B1     제목 "YY년 MM월 (홍진물류) 차량 배차 일지"
 //   3행    일자 | 화주 | 출지 | 착지 | 톤수 | 운송사 | 운반비 | 비고   (B~I열)
 //   4행    데이터 행 서식 견본
-//   5행    회사별 소계 행 서식 견본 (B 회사명, C 소계)
-//   6행    합계 행 서식 견본 (C 소계 합계, H 운반비 합계)
-// 원본처럼 데이터 아래에 한 줄 띄우고 회사별 소계와 합계를 붙입니다.
+// 데이터 행만 채웁니다 (원본 아래쪽의 회사별 소계·합계 영역은 넣지 않습니다).
 
 const GROUP = "창원공동물류센터";
 const MEMBERS = COMPANY_GROUPS[GROUP];
 const DATA_ROW = 4;
-const SUMMARY_ROW = 5;
-const TOTAL_ROW = 6;
 const LAST_COL = 12; // L
 
 /** "2.5톤"처럼 숫자+톤이면 원본 양식처럼 숫자만 넣고, 그 밖의 표기("1톤왕복" 등)는 그대로 둡니다. */
@@ -45,8 +41,6 @@ export const changwonTemplate: ExcelTemplate = {
     sheet.getCell("B1").value = `${year.slice(2)}년  ${month}월 (홍진물류) 차량 배차 일지`;
 
     const dataStyle = snapshotRow(sheet, DATA_ROW, LAST_COL);
-    const summaryStyle = snapshotRow(sheet, SUMMARY_ROW, LAST_COL);
-    const totalStyle = snapshotRow(sheet, TOTAL_ROW, LAST_COL);
 
     let rowNumber = DATA_ROW;
     let previousDate: string | null = null;
@@ -64,33 +58,6 @@ export const changwonTemplate: ExcelTemplate = {
       previousDate = record.dispatch_date;
       rowNumber += 1;
     }
-    const lastDataRow = rowNumber - 1;
-    const hasData = lastDataRow >= DATA_ROW;
-    const dataRange = (col: string) => `${col}${DATA_ROW}:${col}${lastDataRow}`;
-
-    // 한 줄 띄우고 회사별 소계
-    rowNumber += 1;
-    const summaryStart = rowNumber;
-    for (const company of MEMBERS) {
-      const row = applyRowStyle(sheet, rowNumber, summaryStyle);
-      const subtotal = rows
-        .filter((record) => record.company === company)
-        .reduce((sum, record) => sum + Number(record.amount), 0);
-      row.getCell("B").value = company;
-      row.getCell("C").value = hasData
-        ? { formula: `SUMIF(${dataRange("C")},B${rowNumber},${dataRange("H")})`, result: subtotal }
-        : 0;
-      rowNumber += 1;
-    }
-
-    const total = rows.reduce((sum, record) => sum + Number(record.amount), 0);
-    const totalRow = applyRowStyle(sheet, rowNumber, totalStyle);
-    totalRow.getCell("B").value = "합계";
-    totalRow.getCell("C").value = { formula: `SUM(C${summaryStart}:C${rowNumber - 1})`, result: total };
-    totalRow.getCell("H").value = hasData
-      ? { formula: `SUM(${dataRange("H")})`, result: total }
-      : 0;
-
-    sheet.pageSetup.printArea = `A1:I${rowNumber}`;
+    sheet.pageSetup.printArea = `A1:I${Math.max(rowNumber - 1, DATA_ROW)}`;
   },
 };
