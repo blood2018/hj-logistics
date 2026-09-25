@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
-import { normalizeTonnage } from "@/app/lib/dispatch-options";
+import { expandCompanyFilter, normalizeTonnage } from "@/app/lib/dispatch-options";
 
 export type DispatchRecord = {
   id: string;
@@ -118,7 +118,7 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
 
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);
     if (filters.dateTo) query = query.lte("dispatch_date", filters.dateTo);
-    if (filters.company) query = query.eq("company", filters.company);
+    if (filters.company) query = query.in("company", expandCompanyFilter(filters.company));
     if (filters.tonnage) query = query.eq("tonnage", filters.tonnage);
     if (filters.driver) query = query.ilike("driver", toContainsPattern(filters.driver));
     if (filters.driverPhone)

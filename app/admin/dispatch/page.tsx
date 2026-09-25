@@ -8,7 +8,7 @@ import {
   type DispatchFilters,
   type DispatchRecord,
 } from "@/app/lib/dispatch";
-import { COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS, SEARCH_COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
 import {
   EXCEL_TEMPLATES,
   resolveTemplateForCompany,
@@ -114,7 +114,7 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
       <Field label="회사구분">
         <select name="company" defaultValue={filters.company} className={`${inputClass} bg-white`}>
           <option value="">전체</option>
-          {COMPANY_OPTIONS.map((company) => (
+          {SEARCH_COMPANY_OPTIONS.map((company) => (
             <option key={company} value={company}>
               {company}
             </option>
