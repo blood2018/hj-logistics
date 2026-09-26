@@ -16,6 +16,7 @@ import type { ExcelTemplate } from "./types";
 //   5~8행  원본 아래쪽 요약 영역(350~364행)의 서식 견본: 회사별 합계 / 공급가액 / 부가세 / 총합계
 // 요약 영역은 원본과 같은 모양입니다 (라벨 글자 없음):
 //   회사 줄들    B 회사명, C 회사별 합계            (마지막 회사 줄의 E = 공급가액)
+//                개별 회사로 조회했으면 그 회사 한 줄만 넣습니다.
 //   다음 줄      E 부가세(공급가액의 10%)
 //   총합계 줄    C 회사별 합계의 합, E 공급가액+부가세, H 운반비 합계
 
@@ -109,8 +110,10 @@ export const changwonTemplate: ExcelTemplate = {
     // 한 줄 띄우고 요약 영역
     rowNumber += 1;
     const summaryStart = rowNumber;
-    SUMMARY_COMPANIES.forEach((company, index) => {
-      const isLast = index === SUMMARY_COMPANIES.length - 1;
+    // 소속 회사 하나로 조회했으면 그 회사 줄만, 그룹 전체(또는 회사 미지정)면 모든 회사 줄을 넣습니다.
+    const summaryCompanies = MEMBERS.includes(filters.company) ? [filters.company] : SUMMARY_COMPANIES;
+    summaryCompanies.forEach((company, index) => {
+      const isLast = index === summaryCompanies.length - 1;
       const row = applyRowStyle(sheet, rowNumber, isLast ? supplyStyle : companyStyle);
       const subtotal = rows
         .filter((record) => record.company === company)
