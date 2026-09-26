@@ -170,32 +170,44 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
 
 function ExportForm({ filters }: { filters: DispatchFilters }) {
   const matched = resolveTemplateForCompany(filters.company);
+  // 빈 값도 넘겨야 사용자가 지운 날짜가 오늘 날짜로 되돌아가지 않습니다.
+  const hiddenFilters = Object.entries(filters).map(([key, value]) => (
+    <input key={key} type="hidden" name={key} value={value} />
+  ));
 
   return (
-    <form method="get" action="/admin/dispatch/export" className="flex items-center gap-2">
-      {/* 빈 값도 넘겨야 사용자가 지운 날짜가 오늘 날짜로 되돌아가지 않습니다. */}
-      {Object.entries(filters).map(([key, value]) => (
-        <input key={key} type="hidden" name={key} value={value} />
-      ))}
-      <select
-        name="template"
-        defaultValue={matched.id}
-        aria-label="엑셀 양식"
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-      >
-        {EXCEL_TEMPLATES.map((template) => (
-          <option key={template.id} value={template.id}>
-            {template.label}
-          </option>
-        ))}
-      </select>
-      <button
-        type="submit"
-        className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
-      >
-        엑셀 다운로드
-      </button>
-    </form>
+    <div className="flex flex-wrap items-center gap-2">
+      <form method="get" action="/admin/dispatch/export" className="flex items-center gap-2">
+        {hiddenFilters}
+        <select
+          name="template"
+          defaultValue={matched.id}
+          aria-label="엑셀 양식"
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+        >
+          {EXCEL_TEMPLATES.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
+        >
+          엑셀 다운로드
+        </button>
+      </form>
+      <form method="get" action="/admin/dispatch/statement">
+        {hiddenFilters}
+        <button
+          type="submit"
+          className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-600"
+        >
+          거래명세표 다운로드
+        </button>
+      </form>
+    </div>
   );
 }
 
