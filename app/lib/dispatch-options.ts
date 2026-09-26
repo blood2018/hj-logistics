@@ -13,8 +13,8 @@ export const COMPANY_OPTIONS = [
   "위딘",
   "유니테크",
   "경일화학",
-  "조은",
   "MMC",
+  "에이큐",
 ];
 
 /** 조회에서 하나로 묶어 보는 회사 그룹. 그룹 이름으로 조회하면 소속 회사가 모두 조회됩니다. */
@@ -31,8 +31,8 @@ export const COMPANY_GROUPS: Record<string, string[]> = {
     "위딘",
     "유니테크",
     "경일화학",
-    "조은",
-    "MMC",
+      "MMC",
+  "에이큐",
   ],
 };
 
