@@ -36,13 +36,10 @@ export const COMPANY_GROUPS: Record<string, string[]> = {
   ],
 };
 
-/** 조회 화면의 회사구분 선택지: 그룹에 속한 회사는 빼고 그룹 이름을 넣습니다. */
-export const SEARCH_COMPANY_OPTIONS = [
-  ...COMPANY_OPTIONS.filter(
-    (company) => !Object.values(COMPANY_GROUPS).some((members) => members.includes(company))
-  ),
-  ...Object.keys(COMPANY_GROUPS),
-];
+/** 조회 화면의 회사구분 선택지 중 그룹에 속하지 않은 회사 (그룹과 소속 회사는 따로 보여줍니다). */
+export const UNGROUPED_COMPANY_OPTIONS = COMPANY_OPTIONS.filter(
+  (company) => !Object.values(COMPANY_GROUPS).some((members) => members.includes(company))
+);
 
 /** 조회 조건의 회사구분 값을 실제 회사 목록으로 바꿉니다 (그룹이면 소속 회사 전체). */
 export function expandCompanyFilter(company: string) {

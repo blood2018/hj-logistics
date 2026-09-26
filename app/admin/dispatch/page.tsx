@@ -8,7 +8,11 @@ import {
   type DispatchFilters,
   type DispatchRecord,
 } from "@/app/lib/dispatch";
-import { COMPANY_OPTIONS, SEARCH_COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
+import {
+  COMPANY_GROUPS,
+  COMPANY_OPTIONS,
+  UNGROUPED_COMPANY_OPTIONS,
+} from "@/app/lib/dispatch-options";
 import {
   EXCEL_TEMPLATES,
   resolveTemplateForCompany,
@@ -114,11 +118,24 @@ function SearchForm({ filters }: { filters: DispatchFilters }) {
       <Field label="회사구분">
         <select name="company" defaultValue={filters.company} className={`${inputClass} bg-white`}>
           <option value="">전체</option>
-          {SEARCH_COMPANY_OPTIONS.map((company) => (
+          {UNGROUPED_COMPANY_OPTIONS.map((company) => (
             <option key={company} value={company}>
               {company}
             </option>
           ))}
+          {/* 그룹 이름으로 고르면 소속 회사 전체, 아래 개별 회사로 고르면 그 회사만 조회합니다. */}
+          {Object.entries(COMPANY_GROUPS).map(([group, members]) => [
+            <option key={group} value={group}>
+              {group} (전체)
+            </option>,
+            <optgroup key={`${group}-members`} label={group}>
+              {members.map((company) => (
+                <option key={company} value={company}>
+                  {company}
+                </option>
+              ))}
+            </optgroup>,
+          ])}
         </select>
       </Field>
       <Field label="톤수">

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
   const buffer = await workbook.xlsx.writeBuffer();
   const today = todayInKorea();
-  const label = template.group ?? (template.companies.join("_") || filters.company || "전체");
+  const label = filters.company || template.group || template.companies.join("_") || "전체";
   const fileName = `운송내역_${label}_${today}.xlsx`;
 
   return new Response(buffer as ArrayBuffer, {
