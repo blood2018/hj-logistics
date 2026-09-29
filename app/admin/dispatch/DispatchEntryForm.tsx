@@ -14,7 +14,9 @@ const initialState: DispatchFormState = { status: "idle", message: "" };
 const inputClass =
   "h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 aria-invalid:border-red-400 aria-invalid:bg-red-50/40";
 
-// 연속 입력 시 날짜·회사구분은 그대로 두고 나머지만 비웁니다.
+const DEFAULT_ORIGIN = "창원공동물류센터";
+
+// 연속 입력 시 날짜·회사구분은 그대로 두고 나머지만 비웁니다 (상차지는 기본값으로 되돌립니다).
 const RESET_FIELDS = [
   "tonnage",
   "amount",
@@ -39,7 +41,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
     for (const name of RESET_FIELDS) {
       const input = form.elements.namedItem(name);
       if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement) {
-        input.value = "";
+        input.value = name === "origin" ? DEFAULT_ORIGIN : "";
       }
     }
     (form.elements.namedItem("tonnage") as HTMLInputElement | null)?.focus();
@@ -125,6 +127,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
               id="origin"
               name="origin"
               type="text"
+              defaultValue={DEFAULT_ORIGIN}
               placeholder="예: 창원 성산구"
               aria-invalid={invalid("origin")}
               className={inputClass}
