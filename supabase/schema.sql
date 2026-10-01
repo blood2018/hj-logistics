@@ -29,6 +29,7 @@ create table if not exists public.dispatch_records (
   driver text not null,
   driver_phone text not null default '',
   vehicle_number text not null default '',
+  memo text not null default '',
   amount bigint not null check (amount >= 0),
   created_at timestamptz not null default now()
 );
@@ -43,6 +44,8 @@ alter table public.dispatch_records
   add column if not exists driver_phone text not null default '';
 alter table public.dispatch_records
   add column if not exists vehicle_number text not null default '';
+alter table public.dispatch_records
+  add column if not exists memo text not null default '';
 
 -- 정책을 만들지 않으므로 anon/authenticated 키로는 어떤 접근도 불가능합니다.
 alter table public.dispatch_records enable row level security;

@@ -243,19 +243,20 @@ function PeriodPresets({ filters }: { filters: DispatchFilters }) {
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[1100px] text-left text-sm">
+      <table className="w-full min-w-[1240px] text-left text-sm">
         <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[inset_0_-1px_0_0_var(--color-slate-200)]">
           <tr>
-            <th className="px-4 py-3">날짜</th>
-            <th className="px-4 py-3">회사구분</th>
-            <th className="px-4 py-3">상차지</th>
-            <th className="px-4 py-3">하차지</th>
-            <th className="px-4 py-3">톤수</th>
-            <th className="px-4 py-3">기사</th>
-            <th className="px-4 py-3">기사 전화번호</th>
-            <th className="px-4 py-3">차량번호</th>
-            <th className="px-4 py-3 text-right">청구금액</th>
-            <th className="px-4 py-3" />
+            <th className="px-3 py-3">날짜</th>
+            <th className="px-3 py-3">회사구분</th>
+            <th className="px-3 py-3">상차지</th>
+            <th className="px-3 py-3">하차지</th>
+            <th className="px-3 py-3">톤수</th>
+            <th className="px-3 py-3">기사</th>
+            <th className="px-3 py-3">기사 전화번호</th>
+            <th className="px-3 py-3">차량번호</th>
+            <th className="px-3 py-3 text-right">청구금액</th>
+            <th className="w-56 px-3 py-3">비고</th>
+            <th className="px-3 py-3" />
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -311,7 +312,15 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                 input="number"
                 className="text-right tabular-nums text-slate-900"
               />
-              <td className="px-4 py-3 text-right">
+              <EditableCell
+                id={row.id}
+                column="memo"
+                value={row.memo}
+                display={<span className="block max-w-56 truncate">{row.memo}</span>}
+                title={row.memo ? `${row.memo}\n(더블클릭하여 수정)` : undefined}
+                className="text-slate-600"
+              />
+              <td className="px-3 py-3 text-right">
                 <DeleteButton id={row.id} />
               </td>
             </tr>
@@ -319,7 +328,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
 
           {rows.length === 0 && (
             <tr>
-              <td colSpan={10} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={11} className="px-4 py-10 text-center text-slate-400">
                 조건에 맞는 운송 내역이 없습니다.
               </td>
             </tr>

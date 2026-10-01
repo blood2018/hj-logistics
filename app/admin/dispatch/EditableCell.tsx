@@ -10,8 +10,10 @@ type EditableCellProps = {
   id: string;
   column: DispatchColumn;
   value: string;
-  /** 보기 모드에서 표시할 값 (예: 금액 천 단위 쉼표). 없으면 value를 그대로 표시합니다. */
-  display?: string;
+  /** 보기 모드에서 표시할 내용 (예: 금액 천 단위 쉼표). 없으면 value를 그대로 표시합니다. */
+  display?: React.ReactNode;
+  /** 마우스를 올렸을 때 보여줄 글 (예: 말줄임된 비고 전체). 없으면 수정 안내 문구 */
+  title?: string;
   input?: "text" | "date" | "tel" | "number" | "select";
   options?: string[];
   className?: string;
@@ -29,6 +31,7 @@ export default function EditableCell({
   input = "text",
   options = [],
   className = "",
+  title,
 }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -80,8 +83,8 @@ export default function EditableCell({
     return (
       <td
         onDoubleClick={startEditing}
-        title="더블클릭하여 수정"
-        className={`cursor-pointer select-none px-4 py-3 hover:bg-blue-50 ${className}`}
+        title={title || "더블클릭하여 수정"}
+        className={`cursor-pointer select-none px-3 py-3 hover:bg-blue-50 ${className}`}
       >
         {display ?? value}
       </td>

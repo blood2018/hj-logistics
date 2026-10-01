@@ -2,6 +2,7 @@
 export const COMPANY_OPTIONS = [
   "센시텍",
   "락텍",
+  "보틀스",
   "롯데케미칼",
   "유민",
   "성진정밀",

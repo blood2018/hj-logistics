@@ -25,6 +25,7 @@ const RESET_FIELDS = [
   "driver",
   "driverPhone",
   "vehicleNumber",
+  "memo",
 ];
 
 export default function DispatchEntryForm({ today }: { today: string }) {
@@ -185,6 +186,19 @@ export default function DispatchEntryForm({ today }: { today: string }) {
             />
           </Field>
         </div>
+      </Group>
+
+      <Group title="비고" hint="선택 입력">
+        <Field name="memo" label="비고" error={fieldErrors.memo}>
+          <input
+            id="memo"
+            name="memo"
+            type="text"
+            placeholder="예: 하차지 변경, 파렛 회수"
+            aria-invalid={invalid("memo")}
+            className={inputClass}
+          />
+        </Field>
       </Group>
 
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60 px-5 py-4">

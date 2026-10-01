@@ -15,6 +15,7 @@ type DispatchField =
   | "driver"
   | "driverPhone"
   | "vehicleNumber"
+  | "memo"
   | "amount";
 
 export type DispatchFormState = {
@@ -32,6 +33,7 @@ export type DispatchColumn =
   | "driver"
   | "driver_phone"
   | "vehicle_number"
+  | "memo"
   | "amount";
 
 export type UpdateResult = { ok: true } | { ok: false; message: string };
@@ -81,6 +83,10 @@ const FIELD_RULES: Record<
   },
   vehicleNumber: {
     column: "vehicle_number",
+    parse: (raw) => ({ value: raw }), // 선택 입력
+  },
+  memo: {
+    column: "memo",
     parse: (raw) => ({ value: raw }), // 선택 입력
   },
   amount: {

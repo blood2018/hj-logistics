@@ -11,6 +11,7 @@ export type DispatchRecord = {
   driver: string;
   driver_phone: string;
   vehicle_number: string;
+  memo: string;
   amount: number;
   created_at: string;
 };
@@ -113,7 +114,7 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
     let query = supabase
       .from("dispatch_records")
       .select(
-        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, vehicle_number, amount, created_at"
+        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, vehicle_number, memo, amount, created_at"
       );
 
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);

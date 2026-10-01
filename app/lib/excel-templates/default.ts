@@ -10,6 +10,7 @@ const COLUMNS = [
   { header: "기사 전화번호", key: "driver_phone", width: 16 },
   { header: "차량번호", key: "vehicle_number", width: 16 },
   { header: "금액", key: "amount", width: 14 },
+  { header: "비고", key: "memo", width: 24 },
 ];
 
 const thin = { style: "thin" as const, color: { argb: "FFBFBFBF" } };
