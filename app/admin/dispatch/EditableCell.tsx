@@ -7,7 +7,8 @@ import {
 } from "@/app/actions/dispatch";
 
 type EditableCellProps = {
-  id: string;
+  /** 고칠 줄 id. 합쳐진 칸이면 여러 줄 id를 함께 넘깁니다. */
+  id: string | string[];
   column: DispatchColumn;
   value: string;
   /** 보기 모드에서 표시할 내용 (예: 금액 천 단위 쉼표). 없으면 value를 그대로 표시합니다. */

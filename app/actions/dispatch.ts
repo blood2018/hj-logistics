@@ -6,8 +6,9 @@ import { isAuthorizedHeader } from "@/app/lib/admin-auth";
 import { COMPANY_OPTIONS, normalizeTonnage } from "@/app/lib/dispatch-options";
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 
-// 배차(dispatch_trips): 차 한 번 — 날짜, 기사, 전화번호, 차량번호, 지급금액
-// 청구 항목(dispatch_records): 회사별 — 회사구분, 상차지, 하차지, 톤수, 청구금액, 비고
+// 날짜는 짐(청구 항목)의 값입니다. 등록 폼에서는 독립된 칸 하나로 받아 모든 회사 줄에 넣습니다.
+// 배차(dispatch_trips): 차 한 번 — 기사, 전화번호, 차량번호, 지급금액
+// 청구 항목(dispatch_records): 회사별 — 날짜, 회사구분, 상차지, 하차지, 톤수, 청구금액, 비고
 // 전환 기간에는 청구 항목의 날짜·기사·전화번호·차량번호 칸도 배차 값과 같게 맞춰 둡니다
 // (supabase/migrations/20261003_dispatch_trips.sql 참고).
 
@@ -96,7 +97,7 @@ const ITEM_RULES: Record<ItemField, Rule<ItemColumn>> = {
   memo: { column: "memo", parse: (raw) => ({ value: raw }) }, // 선택 입력
 };
 
-/** 배차 칸 중 청구 항목에도 같은 값을 맞춰 두는 칸 (전환 기간) */
+/** 등록 시 청구 항목에도 같은 값을 넣는 칸. 날짜는 짐의 값, 나머지는 전환 기간 동안 배차와 맞춰 둡니다. */
 const MIRRORED_TRIP_COLUMNS: TripColumn[] = ["dispatch_date", "driver", "driver_phone", "vehicle_number"];
 
 /** 회사 줄 입력칸 이름: item_company, item_origin … (줄마다 같은 이름, 화면 순서대로 전송) */
@@ -200,19 +201,26 @@ export async function createDispatchRecord(
 
 /**
  * 조회 표에서 셀 하나를 더블클릭해 수정할 때 호출됩니다.
- * 배차 칸(날짜·기사·전화번호·차량번호·지급금액)은 배차를 고치므로 합적으로 묶인 건 모두에 반영됩니다.
+ * - 배차 칸(기사·전화번호·차량번호·지급금액)은 배차를 고치므로 합적으로 묶인 건 모두에 반영됩니다.
+ * - 날짜는 짐의 값이라 해당 줄만 고칩니다. 합쳐진 날짜 칸이면 합쳐진 줄들(ids)을 함께 고칩니다.
  */
 export async function updateDispatchField(
-  id: string,
+  id: string | string[],
   column: DispatchColumn,
   rawValue: string
 ): Promise<UpdateResult> {
   await assertAdmin();
 
-  const tripRule = Object.values(TRIP_RULES).find((r) => r.column === column);
-  const itemRule = Object.values(ITEM_RULES).find((r) => r.column === column);
+  const ids = (Array.isArray(id) ? id : [id]).filter(Boolean);
+  const isItemDate = column === "dispatch_date";
+  const tripRule = isItemDate
+    ? undefined
+    : Object.values(TRIP_RULES).find((r) => r.column === column);
+  const itemRule = isItemDate
+    ? TRIP_RULES.dispatchDate
+    : Object.values(ITEM_RULES).find((r) => r.column === column);
   const rule = tripRule ?? itemRule;
-  if (!id || !rule) return { ok: false, message: "잘못된 요청입니다." };
+  if (ids.length === 0 || !rule) return { ok: false, message: "잘못된 요청입니다." };
 
   const result = rule.parse(rawValue.trim());
   if ("error" in result) return { ok: false, message: result.error };
@@ -227,7 +235,7 @@ export async function updateDispatchField(
     const { data: record, error: findError } = await supabase
       .from("dispatch_records")
       .select("trip_id")
-      .eq("id", id)
+      .eq("id", ids[0])
       .single<{ trip_id: string }>();
     if (findError || !record) return failed(findError);
 
@@ -248,7 +256,7 @@ export async function updateDispatchField(
     const { error } = await supabase
       .from("dispatch_records")
       .update({ [column]: result.value })
-      .eq("id", id);
+      .in("id", ids);
     if (error) return failed(error);
   }
 

@@ -18,7 +18,7 @@ const inputClass =
 const DEFAULT_ORIGIN = "창원공동물류센터";
 
 /**
- * 신규 등록: 회사 줄은 여러 개(합적), 배차 정보(날짜·기사·차량·지급금액)는 한 번.
+ * 신규 등록: 날짜(독립) → 회사 줄 여러 개(합적) → 배차 정보(기사·차량·지급금액) 한 번.
  * 등록에 성공하면 폼을 새로 그리면서 날짜와 첫 줄 회사구분만 남깁니다.
  */
 export default function DispatchEntryForm({ today }: { today: string }) {
@@ -99,6 +99,21 @@ function EntryFields({
 
   return (
     <>
+      <Group title="날짜" hint="모든 회사 줄에 적용">
+        <div className="max-w-xs">
+          <Field htmlFor="dispatchDate" label="날짜" required error={tripErrors.dispatchDate}>
+            <input
+              id="dispatchDate"
+              name="dispatchDate"
+              type="date"
+              defaultValue={today}
+              aria-invalid={Boolean(tripErrors.dispatchDate)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </Group>
+
       <Group title="회사별 청구" hint="합적이면 줄 추가">
         <div className="space-y-3">
           {lines.map((key, index) => (
@@ -123,17 +138,7 @@ function EntryFields({
       </Group>
 
       <Group title="배차 정보">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-          <Field htmlFor="dispatchDate" label="날짜" required error={tripErrors.dispatchDate}>
-            <input
-              id="dispatchDate"
-              name="dispatchDate"
-              type="date"
-              defaultValue={today}
-              aria-invalid={Boolean(tripErrors.dispatchDate)}
-              className={inputClass}
-            />
-          </Field>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Field htmlFor="driver" label="기사" error={tripErrors.driver}>
             <input
               id="driver"

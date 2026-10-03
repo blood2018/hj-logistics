@@ -2,8 +2,8 @@ import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 import { expandCompanyFilter, normalizeTonnage } from "@/app/lib/dispatch-options";
 
 /**
- * 조회 결과 한 줄 = 회사별 청구 항목 하나 + 그 배차의 정보 (뷰 dispatch_items).
- * 날짜·기사·전화번호·차량번호·지급금액은 배차(dispatch_trips) 값입니다.
+ * 조회 결과 한 줄 = 회사별 청구 항목(짐) 하나 + 그 배차의 정보 (뷰 dispatch_items).
+ * 날짜는 짐의 값이고, 기사·전화번호·차량번호·지급금액은 배차(dispatch_trips) 값입니다.
  */
 export type DispatchRecord = {
   id: string;

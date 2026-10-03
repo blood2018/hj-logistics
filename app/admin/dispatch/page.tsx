@@ -293,11 +293,15 @@ const TRIP_SHARED_TITLE = "합적 배차 공통 항목입니다. 수정하면 �
 
 // 배차 묶음의 첫 칸과 머리줄에 세로 구분선을 넣습니다.
 const TRIP_DIVIDER = "border-l border-slate-200";
+const MERGED_DATE_TITLE =
+  "합쳐진 날짜입니다. 수정하면 이 줄들의 날짜가 함께 바뀝니다.\n(더블클릭하여 수정)";
 // 합적으로 묶인 줄들의 왼쪽 끝에 이어지는 세로 막대
 const COMBINED_BAR = "shadow-[inset_3px_0_0_0_var(--color-blue-500)]";
 
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   const { linesInResult } = summarize(rows);
+  // 날짜가 달라 합적 줄이 떨어져 보일 때, 같은 배차의 지급금액은 처음 한 번만 숫자로 보여줍니다.
+  const shownPay = new Set<string>();
 
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
@@ -354,7 +358,13 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
               .filter((company) => company !== row.company);
             const partial = (linesInResult.get(row.trip_id) ?? 0) < row.trip_size;
 
-            const payDisplay = (
+            const payShownBefore = startsTripRun && shownPay.has(row.trip_id);
+            if (startsTripRun) shownPay.add(row.trip_id);
+            const payDisplay = payShownBefore ? (
+              <span className="text-slate-400" title="위의 같은 배차와 같은 지급금액입니다">
+                〃
+              </span>
+            ) : (
               <>
                 {row.driver_pay == null ? "" : won.format(Number(row.driver_pay))}
                 {partial && row.driver_pay != null && (
@@ -373,11 +383,16 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
               >
                 {!sameDateAsPrev && (
                   <EditableCell
-                    id={row.id}
+                    // 날짜는 짐의 값: 해당 줄만, 합쳐진 칸이면 합쳐진 줄들만 고칩니다.
+                    id={rows.slice(index, index + dateRowSpan).map((r) => r.id)}
                     column="dispatch_date"
                     value={row.dispatch_date}
                     input="date"
-                    title={tripTitle}
+                    title={
+                      dateRowSpan > 1
+                        ? MERGED_DATE_TITLE
+                        : undefined
+                    }
                     rowSpan={dateRowSpan}
                     className={`whitespace-nowrap text-slate-500 ${isCombined ? COMBINED_BAR : ""} ${
                       dateRowSpan > 1 ? "align-middle" : ""
