@@ -99,7 +99,7 @@ function EntryFields({
 
   return (
     <>
-      <Group title="날짜" hint="모든 회사 줄에 적용">
+      <Group title="날짜">
         <div className="max-w-xs">
           <Field htmlFor="dispatchDate" label="날짜" required error={tripErrors.dispatchDate}>
             <input
