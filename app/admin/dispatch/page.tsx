@@ -329,7 +329,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             <th className="bg-slate-100/80 px-3 py-2 text-right">지급금액</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody className="divide-y divide-slate-200">
           {rows.map((row, index) => {
             const isCombined = row.trip_size > 1;
             // 다음 줄이 같은 배차면 사이 가로줄을 지워 한 덩어리로 보이게 합니다.
@@ -352,12 +352,12 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                 )}
               </>
             );
-            const mergedTrip = tripRowSpan > 1 ? "bg-white align-middle" : "";
+            const mergedTrip = tripRowSpan > 1 ? "align-middle" : "";
 
             return (
               <tr
                 key={row.id}
-                className={`transition-colors even:bg-slate-50/60 hover:bg-blue-50/40 ${
+                className={`transition-colors hover:bg-blue-50/40 ${
                   continuesTrip ? "border-b-0" : ""
                 }`}
               >
