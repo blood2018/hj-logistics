@@ -1,8 +1,13 @@
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 import { expandCompanyFilter, normalizeTonnage } from "@/app/lib/dispatch-options";
 
+/**
+ * 조회 결과 한 줄 = 회사별 청구 항목 하나 + 그 배차의 정보 (뷰 dispatch_items).
+ * 날짜·기사·전화번호·차량번호·지급금액은 배차(dispatch_trips) 값입니다.
+ */
 export type DispatchRecord = {
   id: string;
+  trip_id: string;
   dispatch_date: string;
   company: string;
   origin: string;
@@ -12,8 +17,16 @@ export type DispatchRecord = {
   driver_phone: string;
   vehicle_number: string;
   memo: string;
+  /** 청구금액 */
   amount: number;
+  /** 지급금액 (배차 단위, 미입력이면 null) */
+  driver_pay: number | null;
   created_at: string;
+  trip_created_at: string;
+  /** 같은 배차의 회사 줄 수 (2 이상이면 합적) */
+  trip_size: number;
+  /** 같은 배차의 회사 목록 "롯데케미칼, 센시텍" */
+  trip_companies: string;
 };
 
 export type DispatchFilters = {
@@ -105,16 +118,19 @@ function toContainsPattern(value: string) {
   return `%${value.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
 }
 
-/** 조건에 맞는 배차 기록을 전부 가져옵니다 (Supabase 1회 최대 1000건 제한을 페이지 단위로 넘깁니다). */
+/**
+ * 조건에 맞는 청구 항목을 전부 가져옵니다 (Supabase 1회 최대 1000건 제한을 페이지 단위로 넘깁니다).
+ * 날짜 최신순이고, 합적으로 묶인 줄은 붙어서 나옵니다.
+ */
 export async function fetchDispatchRecords(filters: DispatchFilters) {
   const supabase = createSupabaseAdminClient();
   const rows: DispatchRecord[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
     let query = supabase
-      .from("dispatch_records")
+      .from("dispatch_items")
       .select(
-        "id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, vehicle_number, memo, amount, created_at"
+        "id, trip_id, dispatch_date, company, origin, destination, tonnage, driver, driver_phone, vehicle_number, memo, amount, driver_pay, created_at, trip_created_at, trip_size, trip_companies"
       );
 
     if (filters.dateFrom) query = query.gte("dispatch_date", filters.dateFrom);
@@ -129,7 +145,10 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
 
     const { data, error } = await query
       .order("dispatch_date", { ascending: false })
-      .order("created_at", { ascending: false })
+      .order("trip_created_at", { ascending: false })
+      .order("trip_id")
+      .order("created_at", { ascending: true })
+      .order("id")
       .range(from, from + PAGE_SIZE - 1)
       .returns<DispatchRecord[]>();
 

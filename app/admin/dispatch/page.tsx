@@ -43,8 +43,6 @@ export default async function DispatchPage({
     loadError = err instanceof Error ? err.message : "알 수 없는 오류";
   }
 
-  const total = rows.reduce((sum, row) => sum + Number(row.amount), 0);
-
   return (
     <div className="px-6 py-10">
       <div className="mx-auto max-w-[1600px] space-y-8">
@@ -67,25 +65,7 @@ export default async function DispatchPage({
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
-              <p className="text-sm text-slate-500">
-                조회 결과{" "}
-                <strong className="text-xl font-bold tabular-nums text-slate-900">
-                  {rows.length}
-                </strong>
-                건
-              </p>
-              <p className="text-sm text-slate-500">
-                합계{" "}
-                <strong className="text-xl font-bold tabular-nums text-slate-900">
-                  {won.format(total)}
-                </strong>
-                원
-              </p>
-              <span className="pb-0.5 text-xs text-slate-400">
-                셀을 더블클릭하면 수정할 수 있습니다 (Enter 저장 · Esc 취소)
-              </span>
-            </div>
+            <Summary rows={rows} />
             <ExportForm filters={filters} />
           </div>
 
@@ -240,10 +220,84 @@ function PeriodPresets({ filters }: { filters: DispatchFilters }) {
   );
 }
 
+/**
+ * 합계 계산. 지급금액은 배차 단위라 한 번만 셉니다.
+ * 회사 조회처럼 합적 배차의 일부 줄만 조회된 경우, 그 배차의 지급금액은 나눌 근거가 없어 지급·수익에서 뺍니다.
+ */
+function summarize(rows: DispatchRecord[]) {
+  const linesInResult = new Map<string, number>();
+  for (const row of rows) linesInResult.set(row.trip_id, (linesInResult.get(row.trip_id) ?? 0) + 1);
+
+  const billing = rows.reduce((sum, row) => sum + Number(row.amount), 0);
+  let pay = 0;
+  let profit = 0;
+  let partialTrips = 0;
+  let unpaidTrips = 0;
+  const seen = new Set<string>();
+
+  for (const row of rows) {
+    if (seen.has(row.trip_id)) continue;
+    seen.add(row.trip_id);
+    if ((linesInResult.get(row.trip_id) ?? 0) < row.trip_size) {
+      partialTrips += 1;
+      continue;
+    }
+    if (row.driver_pay == null) {
+      unpaidTrips += 1;
+      continue;
+    }
+    const tripBilling = rows
+      .filter((r) => r.trip_id === row.trip_id)
+      .reduce((sum, r) => sum + Number(r.amount), 0);
+    pay += Number(row.driver_pay);
+    profit += tripBilling - Number(row.driver_pay);
+  }
+
+  return { billing, pay, profit, partialTrips, unpaidTrips, linesInResult };
+}
+
+function Summary({ rows }: { rows: DispatchRecord[] }) {
+  const { billing, pay, profit, partialTrips, unpaidTrips } = summarize(rows);
+  const notes = [
+    partialTrips > 0 && `합적 일부만 조회된 배차 ${partialTrips}건은 지급·수익에서 제외`,
+    unpaidTrips > 0 && `지급금액 미입력 배차 ${unpaidTrips}건은 수익에서 제외`,
+  ].filter(Boolean);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-1">
+        <Stat label="조회 결과" value={String(rows.length)} unit="건" />
+        <Stat label="청구 합계" value={won.format(billing)} unit="원" />
+        <Stat label="지급 합계" value={won.format(pay)} unit="원" />
+        <Stat label="수익" value={won.format(profit)} unit="원" />
+        <span className="pb-0.5 text-xs text-slate-400">
+          셀을 더블클릭하면 수정할 수 있습니다 (Enter 저장 · Esc 취소)
+        </span>
+      </div>
+      {notes.length > 0 && <p className="text-xs text-slate-400">{notes.join(" · ")}</p>}
+    </div>
+  );
+}
+
+function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <p className="text-sm text-slate-500">
+      {label}{" "}
+      <strong className="text-xl font-bold tabular-nums text-slate-900">{value}</strong>
+      {unit}
+    </p>
+  );
+}
+
+const TRIP_SHARED_TITLE = "합적 배차 공통 항목입니다. 수정하면 묶인 건이 모두 바뀝니다.\n(더블클릭하여 수정)";
+
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
+  const { linesInResult } = summarize(rows);
+  const shownPay = new Set<string>();
+
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
-      <table className="w-full min-w-[1240px] text-left text-sm">
+      <table className="w-full min-w-[1360px] text-left text-sm">
         <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[inset_0_-1px_0_0_var(--color-slate-200)]">
           <tr>
             <th className="px-3 py-3">날짜</th>
@@ -255,80 +309,130 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             <th className="px-3 py-3">기사 전화번호</th>
             <th className="px-3 py-3">차량번호</th>
             <th className="px-3 py-3 text-right">청구금액</th>
+            <th className="px-3 py-3 text-right">지급금액</th>
             <th className="w-56 px-3 py-3">비고</th>
             <th className="px-3 py-3" />
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {rows.map((row) => (
-            <tr key={row.id} className="transition-colors even:bg-slate-50/60 hover:bg-blue-50/40">
-              <EditableCell
-                id={row.id}
-                column="dispatch_date"
-                value={row.dispatch_date}
-                input="date"
-                className="whitespace-nowrap text-slate-500"
-              />
-              <EditableCell
-                id={row.id}
-                column="company"
-                value={row.company}
-                input="select"
-                options={COMPANY_OPTIONS}
-                className="text-slate-900"
-              />
-              <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
-              <EditableCell
-                id={row.id}
-                column="destination"
-                value={row.destination}
-                className="text-slate-900"
-              />
-              <EditableCell
-                id={row.id}
-                column="tonnage"
-                value={row.tonnage}
-                className="text-slate-900"
-              />
-              <EditableCell id={row.id} column="driver" value={row.driver} className="text-slate-900" />
-              <EditableCell
-                id={row.id}
-                column="driver_phone"
-                value={row.driver_phone}
-                input="tel"
-                className="whitespace-nowrap text-slate-900"
-              />
-              <EditableCell
-                id={row.id}
-                column="vehicle_number"
-                value={row.vehicle_number}
-                className="whitespace-nowrap text-slate-900"
-              />
-              <EditableCell
-                id={row.id}
-                column="amount"
-                value={String(row.amount)}
-                display={won.format(Number(row.amount))}
-                input="number"
-                className="text-right tabular-nums text-slate-900"
-              />
-              <EditableCell
-                id={row.id}
-                column="memo"
-                value={row.memo}
-                display={<span className="block max-w-56 truncate">{row.memo}</span>}
-                title={row.memo ? `${row.memo}\n(더블클릭하여 수정)` : undefined}
-                className="text-slate-600"
-              />
-              <td className="px-3 py-3 text-right">
-                <DeleteButton id={row.id} />
-              </td>
-            </tr>
-          ))}
+          {rows.map((row) => {
+            const isCombined = row.trip_size > 1;
+            const tripTitle = isCombined ? TRIP_SHARED_TITLE : undefined;
+            const partners = row.trip_companies
+              .split(", ")
+              .filter((company) => company !== row.company);
+            const partial = (linesInResult.get(row.trip_id) ?? 0) < row.trip_size;
+
+            // 지급금액은 배차의 첫 줄에만 숫자로, 나머지 줄은 〃
+            const firstOfTrip = !shownPay.has(row.trip_id);
+            shownPay.add(row.trip_id);
+            const payDisplay = firstOfTrip ? (
+              <>
+                {row.driver_pay == null ? "" : won.format(Number(row.driver_pay))}
+                {partial && row.driver_pay != null && (
+                  <span className="ml-1 text-xs text-slate-400">(합적 전체)</span>
+                )}
+              </>
+            ) : (
+              <span className="text-slate-400">〃</span>
+            );
+
+            return (
+              <tr key={row.id} className="transition-colors even:bg-slate-50/60 hover:bg-blue-50/40">
+                <EditableCell
+                  id={row.id}
+                  column="dispatch_date"
+                  value={row.dispatch_date}
+                  input="date"
+                  title={tripTitle}
+                  className="whitespace-nowrap text-slate-500"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="company"
+                  value={row.company}
+                  display={
+                    <span className="whitespace-nowrap">
+                      {row.company}
+                      {isCombined && (
+                        <span
+                          className="ml-1.5 text-xs text-slate-400"
+                          title={`${partners.join(", ")}와(과) 합적`}
+                        >
+                          합적
+                        </span>
+                      )}
+                    </span>
+                  }
+                  input="select"
+                  options={COMPANY_OPTIONS}
+                  className="text-slate-900"
+                />
+                <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
+                <EditableCell
+                  id={row.id}
+                  column="destination"
+                  value={row.destination}
+                  className="text-slate-900"
+                />
+                <EditableCell id={row.id} column="tonnage" value={row.tonnage} className="text-slate-900" />
+                <EditableCell
+                  id={row.id}
+                  column="driver"
+                  value={row.driver}
+                  title={tripTitle}
+                  className="text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="driver_phone"
+                  value={row.driver_phone}
+                  input="tel"
+                  title={tripTitle}
+                  className="whitespace-nowrap text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="vehicle_number"
+                  value={row.vehicle_number}
+                  title={tripTitle}
+                  className="whitespace-nowrap text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="amount"
+                  value={String(row.amount)}
+                  display={won.format(Number(row.amount))}
+                  input="number"
+                  className="text-right tabular-nums text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="driver_pay"
+                  value={row.driver_pay == null ? "" : String(row.driver_pay)}
+                  display={payDisplay}
+                  input="number"
+                  title={tripTitle}
+                  className="whitespace-nowrap text-right tabular-nums text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="memo"
+                  value={row.memo}
+                  display={<span className="block max-w-56 truncate">{row.memo}</span>}
+                  title={row.memo ? `${row.memo}\n(더블클릭하여 수정)` : undefined}
+                  className="text-slate-600"
+                />
+                <td className="px-3 py-3 text-right">
+                  <DeleteButton id={row.id} />
+                </td>
+              </tr>
+            );
+          })}
 
           {rows.length === 0 && (
             <tr>
-              <td colSpan={11} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={12} className="px-4 py-10 text-center text-slate-400">
                 조건에 맞는 운송 내역이 없습니다.
               </td>
             </tr>

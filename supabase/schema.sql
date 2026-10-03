@@ -49,3 +49,6 @@ alter table public.dispatch_records
 
 -- 정책을 만들지 않으므로 anon/authenticated 키로는 어떤 접근도 불가능합니다.
 alter table public.dispatch_records enable row level security;
+
+-- 배차/청구 항목 분리 (2026-10-03): supabase/migrations/20261003_dispatch_trips.sql 을 실행하세요.
+--   dispatch_trips(배차: 날짜·기사·전화번호·차량번호·지급금액) + dispatch_records.trip_id + 조회용 뷰 dispatch_items
