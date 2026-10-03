@@ -18,7 +18,7 @@ const inputClass =
 const DEFAULT_ORIGIN = "창원공동물류센터";
 
 /**
- * 신규 등록: 배차 정보(날짜·기사·차량·지급금액)는 한 번, 회사 줄은 여러 개(합적).
+ * 신규 등록: 회사 줄은 여러 개(합적), 배차 정보(날짜·기사·차량·지급금액)는 한 번.
  * 등록에 성공하면 폼을 새로 그리면서 날짜와 첫 줄 회사구분만 남깁니다.
  */
 export default function DispatchEntryForm({ today }: { today: string }) {
@@ -99,6 +99,29 @@ function EntryFields({
 
   return (
     <>
+      <Group title="회사별 청구" hint="합적이면 줄 추가">
+        <div className="space-y-3">
+          {lines.map((key, index) => (
+            <ItemLine
+              key={key}
+              lineKey={key}
+              showLabelsOnWide={index === 0}
+              defaultCompany={index === 0 ? defaultCompany : ""}
+              autoFocus={focusFirstLine && index === 0}
+              errors={itemErrors[index] ?? {}}
+              onRemove={lines.length > 1 ? () => removeLine(key) : undefined}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={addLine}
+            className="rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 transition-colors hover:border-blue-900 hover:text-blue-900"
+          >
+            + 회사 추가 (합적)
+          </button>
+        </div>
+      </Group>
+
       <Group title="배차 정보">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <Field htmlFor="dispatchDate" label="날짜" required error={tripErrors.dispatchDate}>
@@ -144,29 +167,6 @@ function EntryFields({
           <Field htmlFor="driverPay" label="지급금액" error={tripErrors.driverPay}>
             <MoneyInput id="driverPay" name="driverPay" invalid={Boolean(tripErrors.driverPay)} />
           </Field>
-        </div>
-      </Group>
-
-      <Group title="회사별 청구" hint="합적이면 줄 추가">
-        <div className="space-y-3">
-          {lines.map((key, index) => (
-            <ItemLine
-              key={key}
-              lineKey={key}
-              showLabelsOnWide={index === 0}
-              defaultCompany={index === 0 ? defaultCompany : ""}
-              autoFocus={focusFirstLine && index === 0}
-              errors={itemErrors[index] ?? {}}
-              onRemove={lines.length > 1 ? () => removeLine(key) : undefined}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={addLine}
-            className="rounded-lg border border-dashed border-slate-300 px-4 py-2 text-sm text-slate-600 transition-colors hover:border-blue-900 hover:text-blue-900"
-          >
-            + 회사 추가 (합적)
-          </button>
         </div>
       </Group>
     </>

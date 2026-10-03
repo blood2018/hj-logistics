@@ -291,6 +291,9 @@ function Stat({ label, value, unit }: { label: string; value: string; unit: stri
 
 const TRIP_SHARED_TITLE = "합적 배차 공통 항목입니다. 수정하면 묶인 건이 모두 바뀝니다.\n(더블클릭하여 수정)";
 
+// 배차 묶음의 첫 칸과 머리줄에 세로 구분선을 넣습니다.
+const TRIP_DIVIDER = "border-l border-slate-200";
+
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   const { linesInResult } = summarize(rows);
   const shownPay = new Set<string>();
@@ -298,20 +301,31 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
       <table className="w-full min-w-[1360px] text-left text-sm">
+        {/* 날짜 | 회사별 청구 | 배차 — 배차 칸을 고치면 합적으로 묶인 건이 모두 바뀝니다 */}
         <thead className="sticky top-0 z-10 bg-slate-50 text-xs font-semibold text-slate-500 shadow-[inset_0_-1px_0_0_var(--color-slate-200)]">
+          <tr className="border-b border-slate-200">
+            <th rowSpan={2} className="px-3 py-2 align-bottom">
+              날짜
+            </th>
+            <th colSpan={6} className={`px-3 pt-2 pb-1 text-slate-700 ${TRIP_DIVIDER}`}>
+              회사별 청구
+            </th>
+            <th colSpan={4} className={`bg-slate-100/80 px-3 pt-2 pb-1 text-slate-700 ${TRIP_DIVIDER}`}>
+              배차
+            </th>
+            <th rowSpan={2} className="px-3 py-2" />
+          </tr>
           <tr>
-            <th className="px-3 py-3">날짜</th>
-            <th className="px-3 py-3">회사구분</th>
-            <th className="px-3 py-3">상차지</th>
-            <th className="px-3 py-3">하차지</th>
-            <th className="px-3 py-3">톤수</th>
-            <th className="px-3 py-3">기사</th>
-            <th className="px-3 py-3">기사 전화번호</th>
-            <th className="px-3 py-3">차량번호</th>
-            <th className="px-3 py-3 text-right">청구금액</th>
-            <th className="px-3 py-3 text-right">지급금액</th>
-            <th className="w-56 px-3 py-3">비고</th>
-            <th className="px-3 py-3" />
+            <th className={`px-3 py-2 ${TRIP_DIVIDER}`}>회사구분</th>
+            <th className="px-3 py-2">상차지</th>
+            <th className="px-3 py-2">하차지</th>
+            <th className="px-3 py-2">톤수</th>
+            <th className="px-3 py-2 text-right">청구금액</th>
+            <th className="w-56 px-3 py-2">비고</th>
+            <th className={`bg-slate-100/80 px-3 py-2 ${TRIP_DIVIDER}`}>기사</th>
+            <th className="bg-slate-100/80 px-3 py-2">기사 전화번호</th>
+            <th className="bg-slate-100/80 px-3 py-2">차량번호</th>
+            <th className="bg-slate-100/80 px-3 py-2 text-right">지급금액</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -347,6 +361,8 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                   title={tripTitle}
                   className="whitespace-nowrap text-slate-500"
                 />
+
+                {/* 회사별 청구 */}
                 <EditableCell
                   id={row.id}
                   column="company"
@@ -366,7 +382,7 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                   }
                   input="select"
                   options={COMPANY_OPTIONS}
-                  className="text-slate-900"
+                  className={`text-slate-900 ${TRIP_DIVIDER}`}
                 />
                 <EditableCell id={row.id} column="origin" value={row.origin} className="text-slate-900" />
                 <EditableCell
@@ -378,10 +394,28 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                 <EditableCell id={row.id} column="tonnage" value={row.tonnage} className="text-slate-900" />
                 <EditableCell
                   id={row.id}
+                  column="amount"
+                  value={String(row.amount)}
+                  display={won.format(Number(row.amount))}
+                  input="number"
+                  className="text-right tabular-nums text-slate-900"
+                />
+                <EditableCell
+                  id={row.id}
+                  column="memo"
+                  value={row.memo}
+                  display={<span className="block max-w-56 truncate">{row.memo}</span>}
+                  title={row.memo ? `${row.memo}\n(더블클릭하여 수정)` : undefined}
+                  className="text-slate-600"
+                />
+
+                {/* 배차 */}
+                <EditableCell
+                  id={row.id}
                   column="driver"
                   value={row.driver}
                   title={tripTitle}
-                  className="text-slate-900"
+                  className={`text-slate-900 ${TRIP_DIVIDER}`}
                 />
                 <EditableCell
                   id={row.id}
@@ -400,28 +434,12 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                 />
                 <EditableCell
                   id={row.id}
-                  column="amount"
-                  value={String(row.amount)}
-                  display={won.format(Number(row.amount))}
-                  input="number"
-                  className="text-right tabular-nums text-slate-900"
-                />
-                <EditableCell
-                  id={row.id}
                   column="driver_pay"
                   value={row.driver_pay == null ? "" : String(row.driver_pay)}
                   display={payDisplay}
                   input="number"
                   title={tripTitle}
                   className="whitespace-nowrap text-right tabular-nums text-slate-900"
-                />
-                <EditableCell
-                  id={row.id}
-                  column="memo"
-                  value={row.memo}
-                  display={<span className="block max-w-56 truncate">{row.memo}</span>}
-                  title={row.memo ? `${row.memo}\n(더블클릭하여 수정)` : undefined}
-                  className="text-slate-600"
                 />
                 <td className="px-3 py-3 text-right">
                   <DeleteButton id={row.id} />
