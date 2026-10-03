@@ -298,7 +298,6 @@ const COMBINED_BAR = "shadow-[inset_3px_0_0_0_var(--color-blue-500)]";
 
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   const { linesInResult } = summarize(rows);
-  const shownPay = new Set<string>();
 
   return (
     <div className="max-h-[75vh] overflow-auto rounded-xl border border-slate-200 bg-white">
@@ -335,25 +334,25 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             const isCombined = row.trip_size > 1;
             // 다음 줄이 같은 배차면 사이 가로줄을 지워 한 덩어리로 보이게 합니다.
             const continuesTrip = rows[index + 1]?.trip_id === row.trip_id;
+            // 같은 배차가 이어지는 줄들은 배차 칸을 첫 줄에만 그리고 rowSpan으로 합칩니다 (엑셀 셀 병합처럼).
+            const startsTripRun = rows[index - 1]?.trip_id !== row.trip_id;
+            let tripRowSpan = 1;
+            while (rows[index + tripRowSpan]?.trip_id === row.trip_id) tripRowSpan += 1;
             const tripTitle = isCombined ? TRIP_SHARED_TITLE : undefined;
             const partners = row.trip_companies
               .split(", ")
               .filter((company) => company !== row.company);
             const partial = (linesInResult.get(row.trip_id) ?? 0) < row.trip_size;
 
-            // 지급금액은 배차의 첫 줄에만 숫자로, 나머지 줄은 〃
-            const firstOfTrip = !shownPay.has(row.trip_id);
-            shownPay.add(row.trip_id);
-            const payDisplay = firstOfTrip ? (
+            const payDisplay = (
               <>
                 {row.driver_pay == null ? "" : won.format(Number(row.driver_pay))}
                 {partial && row.driver_pay != null && (
                   <span className="ml-1 text-xs text-slate-400">(합적 전체)</span>
                 )}
               </>
-            ) : (
-              <span className="text-slate-400">〃</span>
             );
+            const mergedTrip = tripRowSpan > 1 ? "bg-white align-middle" : "";
 
             return (
               <tr
@@ -418,38 +417,46 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                   className="text-slate-600"
                 />
 
-                {/* 배차 */}
-                <EditableCell
-                  id={row.id}
-                  column="driver"
-                  value={row.driver}
-                  title={tripTitle}
-                  className={`text-slate-900 ${TRIP_DIVIDER}`}
-                />
-                <EditableCell
-                  id={row.id}
-                  column="driver_phone"
-                  value={row.driver_phone}
-                  input="tel"
-                  title={tripTitle}
-                  className="whitespace-nowrap text-slate-900"
-                />
-                <EditableCell
-                  id={row.id}
-                  column="vehicle_number"
-                  value={row.vehicle_number}
-                  title={tripTitle}
-                  className="whitespace-nowrap text-slate-900"
-                />
-                <EditableCell
-                  id={row.id}
-                  column="driver_pay"
-                  value={row.driver_pay == null ? "" : String(row.driver_pay)}
-                  display={payDisplay}
-                  input="number"
-                  title={tripTitle}
-                  className="whitespace-nowrap text-right tabular-nums text-slate-900"
-                />
+                {/* 배차 — 합적이면 첫 줄에서만 그리고 아래 줄과 합칩니다 */}
+                {startsTripRun && (
+                  <>
+                    <EditableCell
+                      id={row.id}
+                      column="driver"
+                      value={row.driver}
+                      title={tripTitle}
+                      rowSpan={tripRowSpan}
+                      className={`text-slate-900 ${TRIP_DIVIDER} ${mergedTrip}`}
+                    />
+                    <EditableCell
+                      id={row.id}
+                      column="driver_phone"
+                      value={row.driver_phone}
+                      input="tel"
+                      title={tripTitle}
+                      rowSpan={tripRowSpan}
+                      className={`whitespace-nowrap text-slate-900 ${mergedTrip}`}
+                    />
+                    <EditableCell
+                      id={row.id}
+                      column="vehicle_number"
+                      value={row.vehicle_number}
+                      title={tripTitle}
+                      rowSpan={tripRowSpan}
+                      className={`whitespace-nowrap text-slate-900 ${mergedTrip}`}
+                    />
+                    <EditableCell
+                      id={row.id}
+                      column="driver_pay"
+                      value={row.driver_pay == null ? "" : String(row.driver_pay)}
+                      display={payDisplay}
+                      input="number"
+                      title={tripTitle}
+                      rowSpan={tripRowSpan}
+                      className={`whitespace-nowrap text-right tabular-nums text-slate-900 ${mergedTrip}`}
+                    />
+                  </>
+                )}
                 <td className="px-3 py-3 text-right">
                   <DeleteButton id={row.id} />
                 </td>

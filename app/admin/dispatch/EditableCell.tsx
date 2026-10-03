@@ -14,6 +14,8 @@ type EditableCellProps = {
   display?: React.ReactNode;
   /** 마우스를 올렸을 때 보여줄 글 (예: 말줄임된 비고 전체). 없으면 수정 안내 문구 */
   title?: string;
+  /** 여러 줄에 걸친 셀 (합적 배차 칸을 엑셀 셀 병합처럼 보여줄 때) */
+  rowSpan?: number;
   input?: "text" | "date" | "tel" | "number" | "select";
   options?: string[];
   className?: string;
@@ -32,6 +34,7 @@ export default function EditableCell({
   options = [],
   className = "",
   title,
+  rowSpan,
 }: EditableCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -82,6 +85,7 @@ export default function EditableCell({
   if (!editing) {
     return (
       <td
+        rowSpan={rowSpan}
         onDoubleClick={startEditing}
         title={title || "더블클릭하여 수정"}
         className={`cursor-pointer select-none px-3 py-3 hover:bg-blue-50 ${className}`}
@@ -92,7 +96,7 @@ export default function EditableCell({
   }
 
   return (
-    <td className={`px-2 py-2 align-top ${pending ? "opacity-60" : ""}`}>
+    <td rowSpan={rowSpan} className={`px-2 py-2 align-top ${pending ? "opacity-60" : ""}`}>
       {input === "select" ? (
         <select
           autoFocus
