@@ -293,6 +293,8 @@ const TRIP_SHARED_TITLE = "합적 배차 공통 항목입니다. 수정하면 �
 
 // 배차 묶음의 첫 칸과 머리줄에 세로 구분선을 넣습니다.
 const TRIP_DIVIDER = "border-l border-slate-200";
+// 합적으로 묶인 줄들의 왼쪽 끝에 이어지는 세로 막대
+const COMBINED_BAR = "shadow-[inset_3px_0_0_0_var(--color-blue-500)]";
 
 function ResultTable({ rows }: { rows: DispatchRecord[] }) {
   const { linesInResult } = summarize(rows);
@@ -329,8 +331,10 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
-          {rows.map((row) => {
+          {rows.map((row, index) => {
             const isCombined = row.trip_size > 1;
+            // 다음 줄이 같은 배차면 사이 가로줄을 지워 한 덩어리로 보이게 합니다.
+            const continuesTrip = rows[index + 1]?.trip_id === row.trip_id;
             const tripTitle = isCombined ? TRIP_SHARED_TITLE : undefined;
             const partners = row.trip_companies
               .split(", ")
@@ -352,14 +356,19 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             );
 
             return (
-              <tr key={row.id} className="transition-colors even:bg-slate-50/60 hover:bg-blue-50/40">
+              <tr
+                key={row.id}
+                className={`transition-colors even:bg-slate-50/60 hover:bg-blue-50/40 ${
+                  continuesTrip ? "border-b-0" : ""
+                }`}
+              >
                 <EditableCell
                   id={row.id}
                   column="dispatch_date"
                   value={row.dispatch_date}
                   input="date"
                   title={tripTitle}
-                  className="whitespace-nowrap text-slate-500"
+                  className={`whitespace-nowrap text-slate-500 ${isCombined ? COMBINED_BAR : ""}`}
                 />
 
                 {/* 회사별 청구 */}
