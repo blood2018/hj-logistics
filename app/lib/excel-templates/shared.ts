@@ -49,3 +49,28 @@ export function reportYearMonth(dateFrom: string, dateTo: string, firstDate?: st
   const [year, month] = base.split("-");
   return { year, month };
 }
+
+/**
+ * 받은 파일을 바로 인쇄해도 칸이 잘리지 않도록 인쇄 설정을 맞춥니다.
+ * - A4, 가로는 한 장 폭에 맞춤 / 세로는 필요한 만큼 여러 장 (onePage면 한 장에 모두)
+ * - titleRows가 있으면 페이지마다 머리줄을 반복 인쇄
+ */
+export function applyPrintLayout(
+  sheet: ExcelJS.Worksheet,
+  options: {
+    printArea: string;
+    orientation?: "portrait" | "landscape";
+    titleRows?: string;
+    onePage?: boolean;
+  }
+) {
+  sheet.pageSetup.paperSize = 9; // A4
+  sheet.pageSetup.orientation = options.orientation ?? "portrait";
+  sheet.pageSetup.fitToPage = true;
+  sheet.pageSetup.fitToWidth = 1;
+  sheet.pageSetup.fitToHeight = options.onePage ? 1 : 0;
+  sheet.pageSetup.horizontalCentered = true;
+  sheet.pageSetup.printArea = options.printArea;
+  if (options.titleRows) sheet.pageSetup.printTitlesRow = options.titleRows;
+  sheet.pageSetup.margins = { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
+}

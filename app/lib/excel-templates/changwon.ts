@@ -1,5 +1,6 @@
 import { COMPANY_GROUPS } from "@/app/lib/dispatch-options";
 import {
+  applyPrintLayout,
   applyRowStyle,
   loadTemplateFile,
   reportYearMonth,
@@ -142,6 +143,6 @@ export const changwonTemplate: ExcelTemplate = {
     totalRow.getCell("E").value = { formula: `SUM(E${supplyRow}:E${rowNumber - 1})`, result: total + vat };
     totalRow.getCell("H").value = hasData ? { formula: `SUM(${dataRange("H")})`, result: total } : 0;
 
-    sheet.pageSetup.printArea = `A1:I${rowNumber}`;
+    applyPrintLayout(sheet, { printArea: `A1:I${rowNumber}`, titleRows: "3:3" });
   },
 };

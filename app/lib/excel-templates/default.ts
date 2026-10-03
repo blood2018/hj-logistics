@@ -1,3 +1,4 @@
+import { applyPrintLayout } from "./shared";
 import type { ExcelTemplate } from "./types";
 
 const COLUMNS = [
@@ -61,5 +62,12 @@ export const defaultTemplate: ExcelTemplate = {
     sheet.getColumn("amount").numFmt = "#,##0";
     sheet.getColumn("dispatch_date").alignment = { horizontal: "center" };
     sheet.getColumn("tonnage").alignment = { horizontal: "center" };
+
+    // 열이 많아 A4 가로로 인쇄하고, 머리줄(3행)은 페이지마다 반복합니다.
+    applyPrintLayout(sheet, {
+      printArea: `A1:${sheet.getColumn(COLUMNS.length).letter}${totalRow.number}`,
+      orientation: "landscape",
+      titleRows: "3:3",
+    });
   },
 };

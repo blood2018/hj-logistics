@@ -1,7 +1,7 @@
 import type ExcelJS from "exceljs";
 import type { DispatchFilters, DispatchRecord } from "@/app/lib/dispatch";
 import { COMPANY_GROUPS, COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
-import { loadTemplateFile } from "./shared";
+import { applyPrintLayout, loadTemplateFile } from "./shared";
 
 // 거래명세표 원본 양식(files/statement.xlsx)을 불러와 채웁니다.
 // 양식 파일은 원본에서 도장 이미지와 매달 바뀌는 값만 지운 것입니다.
@@ -113,6 +113,9 @@ export async function buildStatement(
 
   sheet.getCell("C11").value = toKoreanAmount(total);
   sheet.getCell("E11").value = `원정(\\${Math.round(total).toLocaleString("en-US")})`;
+
+  // 거래명세표는 A4 한 장 (B~H열, 33행까지)
+  applyPrintLayout(sheet, { printArea: "A1:H33", onePage: true });
 
   const seal = process.env.STATEMENT_SEAL_BASE64;
   if (seal) {

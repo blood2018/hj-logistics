@@ -1,4 +1,5 @@
 import {
+  applyPrintLayout,
   applyRowStyle,
   loadTemplateFile,
   reportYearMonth,
@@ -66,6 +67,6 @@ export const roctecTemplate: ExcelTemplate = {
         : 0;
     totalRow.getCell("K").value = "VAT 별도";
 
-    sheet.pageSetup.printArea = `A1:L${rowNumber}`;
+    applyPrintLayout(sheet, { printArea: `A1:L${rowNumber}`, titleRows: "3:3" });
   },
 };
