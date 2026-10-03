@@ -338,6 +338,16 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
             const startsTripRun = rows[index - 1]?.trip_id !== row.trip_id;
             let tripRowSpan = 1;
             while (rows[index + tripRowSpan]?.trip_id === row.trip_id) tripRowSpan += 1;
+            // 날짜는 같은 배차이면서 날짜도 같은 줄끼리만 합칩니다 (다른 날짜는 합치지 않음).
+            const sameDateAsPrev =
+              rows[index - 1]?.trip_id === row.trip_id &&
+              rows[index - 1]?.dispatch_date === row.dispatch_date;
+            let dateRowSpan = 1;
+            while (
+              rows[index + dateRowSpan]?.trip_id === row.trip_id &&
+              rows[index + dateRowSpan]?.dispatch_date === row.dispatch_date
+            )
+              dateRowSpan += 1;
             const tripTitle = isCombined ? TRIP_SHARED_TITLE : undefined;
             const partners = row.trip_companies
               .split(", ")
@@ -361,14 +371,19 @@ function ResultTable({ rows }: { rows: DispatchRecord[] }) {
                   continuesTrip ? "border-b-0" : ""
                 }`}
               >
-                <EditableCell
-                  id={row.id}
-                  column="dispatch_date"
-                  value={row.dispatch_date}
-                  input="date"
-                  title={tripTitle}
-                  className={`whitespace-nowrap text-slate-500 ${isCombined ? COMBINED_BAR : ""}`}
-                />
+                {!sameDateAsPrev && (
+                  <EditableCell
+                    id={row.id}
+                    column="dispatch_date"
+                    value={row.dispatch_date}
+                    input="date"
+                    title={tripTitle}
+                    rowSpan={dateRowSpan}
+                    className={`whitespace-nowrap text-slate-500 ${isCombined ? COMBINED_BAR : ""} ${
+                      dateRowSpan > 1 ? "align-middle" : ""
+                    }`}
+                  />
+                )}
 
                 {/* 회사별 청구 */}
                 <EditableCell
