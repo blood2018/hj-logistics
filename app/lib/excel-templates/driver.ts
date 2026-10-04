@@ -1,9 +1,10 @@
 import { applyPrintLayout, toExcelDate } from "./shared";
 import type { ExcelTemplate } from "./types";
 
-// 기사 정산 양식: 사이트 조회 표를 그대로 엑셀로 옮깁니다 (지급금액 포함, 소계·총계 없음).
+// 기사 정산 양식: 사이트 조회 표를 그대로 엑셀로 옮기고(지급금액 포함), 그 아래에 기사별 소계 표를 붙입니다.
 //   1행 머리줄, 2행부터 조회 결과와 같은 순서·같은 칸
 //   합적이면 사이트와 같이 배차 칸(기사·전화번호·차량번호·지급금액)과 같은 날짜 칸을 셀 병합합니다.
+//   기사별 소계: 기사 | 배차 건수 | 청구금액 | 지급금액 (지급금액은 배차마다 한 번만 더합니다)
 
 const COLUMNS = [
   { header: "날짜", key: "dispatch_date", width: 11 },
@@ -26,6 +27,7 @@ const letter = (key: Key) => String.fromCharCode(64 + col(key));
 const thin = { style: "thin" as const, color: { argb: "FFBFBFBF" } };
 const border = { top: thin, left: thin, bottom: thin, right: thin };
 const TRIP_KEYS = ["driver", "driver_phone", "vehicle_number", "driver_pay"] as const;
+const NO_DRIVER = "(기사 미입력)";
 
 export const driverTemplate: ExcelTemplate = {
   id: "driver",
@@ -94,8 +96,51 @@ export const driverTemplate: ExcelTemplate = {
       sheet.getColumn(col(key)).alignment = { horizontal: "center", vertical: "middle" };
     }
 
+    // 기사별 소계 (표 아래 한 줄 띄우고)
+    const byDriver = new Map<string, { trips: Set<string>; amount: number; pay: number }>();
+    const paidTrips = new Set<string>();
+    for (const row of rows) {
+      const name = row.driver.trim() || NO_DRIVER;
+      if (!byDriver.has(name)) byDriver.set(name, { trips: new Set(), amount: 0, pay: 0 });
+      const entry = byDriver.get(name)!;
+      entry.trips.add(row.trip_id);
+      entry.amount += Number(row.amount);
+      if (!paidTrips.has(row.trip_id)) {
+        paidTrips.add(row.trip_id);
+        entry.pay += Number(row.driver_pay ?? 0);
+      }
+    }
+    const drivers = [...byDriver.entries()].sort(([a], [b]) =>
+      a === NO_DRIVER ? 1 : b === NO_DRIVER ? -1 : a.localeCompare(b, "ko")
+    );
+
+    const summaryTitleRow = lastRow + 2;
+    sheet.getCell(summaryTitleRow, 1).value = "기사별 소계";
+    sheet.getCell(summaryTitleRow, 1).font = { bold: true };
+    const summaryHeader = sheet.getRow(summaryTitleRow + 1);
+    ["기사", "배차 건수", "청구금액", "지급금액"].forEach((label, i) => {
+      const cell = summaryHeader.getCell(i + 1);
+      cell.value = label;
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8EEF7" } };
+      cell.border = border;
+    });
+    drivers.forEach(([name, entry], i) => {
+      const r = sheet.getRow(summaryTitleRow + 2 + i);
+      const values = [name, entry.trips.size, entry.amount, entry.pay];
+      values.forEach((value, c) => {
+        const cell = r.getCell(c + 1);
+        cell.value = value;
+        cell.border = border;
+        cell.alignment = { vertical: "middle", horizontal: c === 0 ? "left" : c === 1 ? "center" : "right" };
+        if (c >= 2) cell.numFmt = "#,##0";
+      });
+    });
+    const summaryLastRow = summaryTitleRow + 1 + drivers.length;
+
     applyPrintLayout(sheet, {
-      printArea: `A1:${letter("driver_pay")}${Math.max(lastRow, 1)}`,
+      printArea: `A1:${letter("driver_pay")}${Math.max(summaryLastRow, 1)}`,
       orientation: "landscape",
       titleRows: "1:1",
     });
