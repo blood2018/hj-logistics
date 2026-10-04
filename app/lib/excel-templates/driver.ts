@@ -4,7 +4,8 @@ import type { ExcelTemplate } from "./types";
 // 기사 정산 양식: 사이트 조회 표를 그대로 엑셀로 옮기고(지급금액 포함), 그 아래에 기사별 소계 표를 붙입니다.
 //   1행 머리줄, 2행부터 조회 결과와 같은 순서·같은 칸
 //   합적이면 사이트와 같이 배차 칸(기사·전화번호·차량번호·지급금액)과 같은 날짜 칸을 셀 병합합니다.
-//   기사별 소계: 기사 | 배차 건수 | 청구금액 | 지급금액 (지급금액은 배차마다 한 번만 더합니다)
+//   청구금액은 넣지 않습니다 (기사 지급 정산용).
+//   기사별 소계: 기사 | 배차 건수 | 지급금액 (지급금액은 배차마다 한 번만 더합니다)
 
 const COLUMNS = [
   { header: "날짜", key: "dispatch_date", width: 11 },
@@ -12,7 +13,6 @@ const COLUMNS = [
   { header: "상차지", key: "origin", width: 18 },
   { header: "하차지", key: "destination", width: 22 },
   { header: "톤수", key: "tonnage", width: 8 },
-  { header: "청구금액", key: "amount", width: 12 },
   { header: "비고", key: "memo", width: 22 },
   { header: "기사", key: "driver", width: 12 },
   { header: "기사 전화번호", key: "driver_phone", width: 15 },
@@ -57,7 +57,6 @@ export const driverTemplate: ExcelTemplate = {
       r.getCell(col("origin")).value = row.origin;
       r.getCell(col("destination")).value = row.destination;
       r.getCell(col("tonnage")).value = row.tonnage || null;
-      r.getCell(col("amount")).value = Number(row.amount);
       r.getCell(col("memo")).value = row.memo || null;
       r.getCell(col("driver")).value = row.driver || null;
       r.getCell(col("driver_phone")).value = row.driver_phone || null;
@@ -90,21 +89,19 @@ export const driverTemplate: ExcelTemplate = {
       }
     }
     sheet.getColumn(col("dispatch_date")).numFmt = "yyyy-mm-dd";
-    sheet.getColumn(col("amount")).numFmt = "#,##0";
     sheet.getColumn(col("driver_pay")).numFmt = "#,##0";
     for (const key of ["dispatch_date", "tonnage"] as const) {
       sheet.getColumn(col(key)).alignment = { horizontal: "center", vertical: "middle" };
     }
 
     // 기사별 소계 (표 아래 한 줄 띄우고)
-    const byDriver = new Map<string, { trips: Set<string>; amount: number; pay: number }>();
+    const byDriver = new Map<string, { trips: Set<string>; pay: number }>();
     const paidTrips = new Set<string>();
     for (const row of rows) {
       const name = row.driver.trim() || NO_DRIVER;
-      if (!byDriver.has(name)) byDriver.set(name, { trips: new Set(), amount: 0, pay: 0 });
+      if (!byDriver.has(name)) byDriver.set(name, { trips: new Set(), pay: 0 });
       const entry = byDriver.get(name)!;
       entry.trips.add(row.trip_id);
-      entry.amount += Number(row.amount);
       if (!paidTrips.has(row.trip_id)) {
         paidTrips.add(row.trip_id);
         entry.pay += Number(row.driver_pay ?? 0);
@@ -118,7 +115,7 @@ export const driverTemplate: ExcelTemplate = {
     sheet.getCell(summaryTitleRow, 1).value = "기사별 소계";
     sheet.getCell(summaryTitleRow, 1).font = { bold: true };
     const summaryHeader = sheet.getRow(summaryTitleRow + 1);
-    ["기사", "배차 건수", "청구금액", "지급금액"].forEach((label, i) => {
+    ["기사", "배차 건수", "지급금액"].forEach((label, i) => {
       const cell = summaryHeader.getCell(i + 1);
       cell.value = label;
       cell.font = { bold: true };
@@ -128,7 +125,7 @@ export const driverTemplate: ExcelTemplate = {
     });
     drivers.forEach(([name, entry], i) => {
       const r = sheet.getRow(summaryTitleRow + 2 + i);
-      const values = [name, entry.trips.size, entry.amount, entry.pay];
+      const values = [name, entry.trips.size, entry.pay];
       values.forEach((value, c) => {
         const cell = r.getCell(c + 1);
         cell.value = value;
