@@ -1,11 +1,17 @@
 import { changwonTemplate } from "./changwon";
 import { defaultTemplate } from "./default";
+import { driverTemplate } from "./driver";
 import { roctecTemplate } from "./roctec";
 import type { ExcelTemplate } from "./types";
 
 // 회사별 양식이 추가되면 여기에 등록합니다.
 // 예) import { abcTemplate } from "./abc";  →  [abcTemplate, defaultTemplate]
-export const EXCEL_TEMPLATES: ExcelTemplate[] = [roctecTemplate, changwonTemplate, defaultTemplate];
+export const EXCEL_TEMPLATES: ExcelTemplate[] = [
+  roctecTemplate,
+  changwonTemplate,
+  defaultTemplate,
+  driverTemplate,
+];
 
 export function findTemplate(id: string | null | undefined) {
   return EXCEL_TEMPLATES.find((t) => t.id === id);

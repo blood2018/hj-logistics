@@ -10,6 +10,8 @@ export type ExcelTemplate = {
   companies: string[];
   /** 조회 화면의 회사 그룹 이름 (예: "창원공동물류센터"). 그룹으로 조회하면 이 양식이 선택됩니다. */
   group?: string;
+  /** 다운로드 파일 이름 앞부분 (없으면 회사명 기준) */
+  fileLabel?: (filters: DispatchFilters) => string;
   /** 워크북에 시트를 채웁니다 */
   build: (
     workbook: ExcelJS.Workbook,
