@@ -5,6 +5,7 @@ import {
   createDispatchRecord,
   type DispatchFormState,
 } from "@/app/actions/dispatch";
+import type { DriverInfo } from "@/app/lib/dispatch";
 import { COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
 
 type TripErrors = NonNullable<DispatchFormState["fieldErrors"]>;
@@ -27,7 +28,13 @@ const FILL_ON_SELECT: Record<string, { origin?: string; destination?: string }> 
  * 신규 등록: 날짜(독립) → 회사 줄 여러 개(합적) → 배차 정보(기사·차량·지급금액) 한 번.
  * 등록에 성공하면 폼을 새로 그리면서 날짜와 첫 줄 회사구분만 남깁니다.
  */
-export default function DispatchEntryForm({ today }: { today: string }) {
+export default function DispatchEntryForm({
+  today,
+  drivers,
+}: {
+  today: string;
+  drivers: DriverInfo[];
+}) {
   const [state, formAction, pending] = useActionState(createDispatchRecord, initialState);
 
   // form action 대신 onSubmit을 써서, 검증 실패 시 React가 입력값을 초기화하지 않도록 합니다.
@@ -47,6 +54,7 @@ export default function DispatchEntryForm({ today }: { today: string }) {
       className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white"
     >
       <EntryFields
+        drivers={drivers}
         today={state.keep?.dispatchDate || today}
         defaultCompany={state.keep?.company ?? ""}
         focusFirstLine={isSuccess}
@@ -85,12 +93,14 @@ export default function DispatchEntryForm({ today }: { today: string }) {
 }
 
 function EntryFields({
+  drivers,
   today,
   defaultCompany,
   focusFirstLine,
   tripErrors,
   itemErrors,
 }: {
+  drivers: DriverInfo[];
   today: string;
   defaultCompany: string;
   focusFirstLine: boolean;
@@ -101,6 +111,24 @@ function EntryFields({
   const [lines, setLines] = useState<number[]>([0]);
 
   const addLine = () => setLines((prev) => [...prev, nextKey.current++]);
+
+  // 기사 이름이 기존 기사와 정확히 같으면 최근 전화번호·차량번호를 채웁니다.
+  // 직접 입력한 값은 덮어쓰지 않고, 비어 있거나 직전에 자동으로 채운 값일 때만 바꿉니다.
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const vehicleRef = useRef<HTMLInputElement>(null);
+  const autoFilled = useRef({ phone: "", vehicle: "" });
+  function handleDriverChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const info = drivers.find((d) => d.name === event.target.value.trim());
+    const fill = (input: HTMLInputElement | null, key: "phone" | "vehicle", value: string) => {
+      if (!input) return;
+      const current = input.value.trim();
+      if (current && current !== autoFilled.current[key]) return; // 직접 입력한 값은 유지
+      input.value = value;
+      autoFilled.current[key] = value;
+    };
+    fill(phoneRef.current, "phone", info?.phone ?? "");
+    fill(vehicleRef.current, "vehicle", info?.vehicle ?? "");
+  }
   const removeLine = (key: number) => setLines((prev) => prev.filter((k) => k !== key));
 
   return (
@@ -150,15 +178,24 @@ function EntryFields({
               id="driver"
               name="driver"
               type="text"
+              list="driver-options"
+              autoComplete="off"
+              onChange={handleDriverChange}
               placeholder="기사명"
               aria-invalid={Boolean(tripErrors.driver)}
               className={inputClass}
             />
           </Field>
+          <datalist id="driver-options">
+            {drivers.map((d) => (
+              <option key={d.name} value={d.name} />
+            ))}
+          </datalist>
           <Field htmlFor="driverPhone" label="기사 전화번호" error={tripErrors.driverPhone}>
             <input
               id="driverPhone"
               name="driverPhone"
+              ref={phoneRef}
               type="tel"
               placeholder="010-1234-5678"
               aria-invalid={Boolean(tripErrors.driverPhone)}
@@ -169,6 +206,7 @@ function EntryFields({
             <input
               id="vehicleNumber"
               name="vehicleNumber"
+              ref={vehicleRef}
               type="text"
               placeholder="예: 경남81아2637"
               aria-invalid={Boolean(tripErrors.vehicleNumber)}

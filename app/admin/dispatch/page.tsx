@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   fetchDispatchRecords,
+  fetchDriverDirectory,
+  type DriverInfo,
   FILTER_KEYS,
   parseDispatchFilters,
   periodPresets,
@@ -34,6 +36,12 @@ export default async function DispatchPage({
   const filters = parseDispatchFilters(await searchParams);
   const today = todayInKorea();
 
+  // 신규 등록의 기사 자동완성용 (불러오지 못해도 화면은 그대로 동작)
+  const drivers: DriverInfo[] = await fetchDriverDirectory().catch((err) => {
+    console.error("driver directory load failed", err);
+    return [];
+  });
+
   let rows: DispatchRecord[] = [];
   let loadError: string | null = null;
   try {
@@ -55,7 +63,7 @@ export default async function DispatchPage({
 
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-900">신규 등록</h2>
-          <DispatchEntryForm today={today} />
+          <DispatchEntryForm today={today} drivers={drivers} />
         </section>
 
         <section className="space-y-3">

@@ -159,3 +159,43 @@ export async function fetchDispatchRecords(filters: DispatchFilters) {
 
   return rows;
 }
+
+export type DriverInfo = {
+  name: string;
+  /** 가장 최근에 입력된 (빈칸이 아닌) 전화번호 */
+  phone: string;
+  /** 가장 최근에 입력된 (빈칸이 아닌) 차량번호 */
+  vehicle: string;
+  /** 배차 횟수 (자주 쓰는 기사부터 보여주는 데 사용) */
+  count: number;
+};
+
+/** 신규 등록 자동완성용 기사 목록: 지금까지의 배차에서 기사별 최근 전화번호·차량번호를 모읍니다. */
+export async function fetchDriverDirectory(): Promise<DriverInfo[]> {
+  const supabase = createSupabaseAdminClient();
+  const drivers = new Map<string, DriverInfo>();
+
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("dispatch_trips")
+      .select("driver, driver_phone, vehicle_number")
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1)
+      .returns<{ driver: string; driver_phone: string; vehicle_number: string }[]>();
+    if (error) throw error;
+
+    for (const trip of data ?? []) {
+      const name = trip.driver.trim();
+      if (!name || name === "0") continue; // "0"은 잘못 입력된 값
+      const entry = drivers.get(name) ?? { name, phone: "", vehicle: "", count: 0 };
+      entry.count += 1;
+      // 최신순으로 읽으므로 처음 만난 빈칸 아닌 값이 가장 최근 값입니다.
+      if (!entry.phone && trip.driver_phone.trim()) entry.phone = trip.driver_phone.trim();
+      if (!entry.vehicle && trip.vehicle_number.trim()) entry.vehicle = trip.vehicle_number.trim();
+      drivers.set(name, entry);
+    }
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+
+  return [...drivers.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
+}
