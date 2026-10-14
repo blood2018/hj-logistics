@@ -22,6 +22,7 @@ const DEFAULT_ORIGIN = "창원공동물류센터";
 const FILL_ON_SELECT: Record<string, { origin?: string; destination?: string }> = {
   락텍: { origin: "락텍", destination: "로템" },
   "대하(양산)": { origin: "양산대하" },
+  보틀스: { origin: "보틀스" },
 };
 
 /**

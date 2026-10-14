@@ -1,5 +1,9 @@
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
-import { expandCompanyFilter, normalizeTonnage } from "@/app/lib/dispatch-options";
+import {
+  AUTOFILL_DRIVERS,
+  expandCompanyFilter,
+  normalizeTonnage,
+} from "@/app/lib/dispatch-options";
 
 /**
  * 조회 결과 한 줄 = 회사별 청구 항목(짐) 하나 + 그 배차의 정보 (뷰 dispatch_items).
@@ -170,7 +174,10 @@ export type DriverInfo = {
   count: number;
 };
 
-/** 신규 등록 자동완성용 기사 목록: 지금까지의 배차에서 기사별 최근 전화번호·차량번호를 모읍니다. */
+/**
+ * 신규 등록 자동완성용 기사 목록: 지금까지의 배차에서 기사별 최근 전화번호·차량번호를 모읍니다.
+ * AUTOFILL_DRIVERS에 있는 기사만 대상입니다.
+ */
 export async function fetchDriverDirectory(): Promise<DriverInfo[]> {
   const supabase = createSupabaseAdminClient();
   const drivers = new Map<string, DriverInfo>();
@@ -186,7 +193,7 @@ export async function fetchDriverDirectory(): Promise<DriverInfo[]> {
 
     for (const trip of data ?? []) {
       const name = trip.driver.trim();
-      if (!name || name === "0") continue; // "0"은 잘못 입력된 값
+      if (!(name in AUTOFILL_DRIVERS)) continue;
       const entry = drivers.get(name) ?? { name, phone: "", vehicle: "", count: 0 };
       entry.count += 1;
       // 최신순으로 읽으므로 처음 만난 빈칸 아닌 값이 가장 최근 값입니다.
@@ -195,6 +202,14 @@ export async function fetchDriverDirectory(): Promise<DriverInfo[]> {
       drivers.set(name, entry);
     }
     if (!data || data.length < PAGE_SIZE) break;
+  }
+
+  // 목록에 정해둔 값이 있으면 그 값을 우선합니다.
+  for (const [name, fixed] of Object.entries(AUTOFILL_DRIVERS)) {
+    const entry = drivers.get(name) ?? { name, phone: "", vehicle: "", count: 0 };
+    if (fixed.phone) entry.phone = fixed.phone;
+    if (fixed.vehicle) entry.vehicle = fixed.vehicle;
+    drivers.set(name, entry);
   }
 
   return [...drivers.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));

@@ -59,3 +59,13 @@ export function normalizeTonnage(raw: string) {
   const value = raw.trim().replace(/\s+/g, "");
   return /^\d+(\.\d+)?$/.test(value) ? `${value}톤` : value;
 }
+
+/**
+ * 신규 등록에서 자동완성·전화번호/차량번호 자동 입력을 적용할 기사 (여기 있는 기사만 적용).
+ * 값을 적어두면 그 값을 쓰고, 비워두면 그 기사의 가장 최근 배차 기록을 씁니다.
+ */
+export const AUTOFILL_DRIVERS: Record<string, { phone?: string; vehicle?: string }> = {
+  정민철: { phone: "010-5380-6528" },
+  김정주: {},
+  정기술: {},
+};
