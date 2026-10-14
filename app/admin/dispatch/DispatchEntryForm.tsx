@@ -17,10 +17,10 @@ const inputClass =
 
 const DEFAULT_ORIGIN = "창원공동물류센터";
 
-/** 이 회사를 고르면 상차지를 해당 값으로 바꿉니다. 다른 회사를 골라도 상차지는 그대로 둡니다. */
-const ORIGIN_ON_SELECT: Record<string, string> = {
-  락텍: "락텍",
-  "대하(양산)": "양산대하",
+/** 이 회사를 고르면 상차지·하차지를 해당 값으로 바꿉니다. 목록에 없는 회사나 칸은 그대로 둡니다. */
+const FILL_ON_SELECT: Record<string, { origin?: string; destination?: string }> = {
+  락텍: { origin: "락텍", destination: "로템" },
+  "대하(양산)": { origin: "양산대하" },
 };
 
 /**
@@ -201,10 +201,12 @@ function ItemLine({
 }) {
   const id = (field: string) => `item_${field}_${lineKey}`;
   const originRef = useRef<HTMLInputElement>(null);
-  // ORIGIN_ON_SELECT에 있는 회사를 고르면 상차지를 바꿉니다. 그 외 회사는 상차지를 건드리지 않습니다.
+  const destinationRef = useRef<HTMLInputElement>(null);
+  // FILL_ON_SELECT에 있는 회사를 고르면 상차지·하차지를 채웁니다. 그 외 회사는 건드리지 않습니다.
   function handleCompanyChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    const origin = ORIGIN_ON_SELECT[event.target.value];
-    if (origin && originRef.current) originRef.current.value = origin;
+    const fill = FILL_ON_SELECT[event.target.value];
+    if (fill?.origin && originRef.current) originRef.current.value = fill.origin;
+    if (fill?.destination && destinationRef.current) destinationRef.current.value = fill.destination;
   }
   // 넓은 화면에서는 첫 줄에만 칸 이름을 보여줍니다.
   const labelClass = showLabelsOnWide ? "" : "lg:sr-only";
@@ -243,6 +245,7 @@ function ItemLine({
         <input
           id={id("destination")}
           name="item_destination"
+          ref={destinationRef}
           type="text"
           autoFocus={autoFocus}
           placeholder="예: 부산 강서구"
