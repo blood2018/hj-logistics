@@ -17,6 +17,9 @@ const inputClass =
 
 const DEFAULT_ORIGIN = "창원공동물류센터";
 
+/** 이 회사를 고르면 상차지를 해당 값으로 바꿉니다. 다른 회사를 골라도 상차지는 그대로 둡니다. */
+const ORIGIN_ON_SELECT: Record<string, string> = { 락텍: "락텍" };
+
 /**
  * 신규 등록: 날짜(독립) → 회사 줄 여러 개(합적) → 배차 정보(기사·차량·지급금액) 한 번.
  * 등록에 성공하면 폼을 새로 그리면서 날짜와 첫 줄 회사구분만 남깁니다.
@@ -194,6 +197,12 @@ function ItemLine({
   onRemove?: () => void;
 }) {
   const id = (field: string) => `item_${field}_${lineKey}`;
+  const originRef = useRef<HTMLInputElement>(null);
+  // 락텍을 고르면 상차지를 락텍으로 바꿉니다. 그 외 회사는 상차지를 건드리지 않습니다.
+  function handleCompanyChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const origin = ORIGIN_ON_SELECT[event.target.value];
+    if (origin && originRef.current) originRef.current.value = origin;
+  }
   // 넓은 화면에서는 첫 줄에만 칸 이름을 보여줍니다.
   const labelClass = showLabelsOnWide ? "" : "lg:sr-only";
 
@@ -204,6 +213,7 @@ function ItemLine({
           id={id("company")}
           name="item_company"
           defaultValue={defaultCompany}
+          onChange={handleCompanyChange}
           aria-invalid={Boolean(errors.company)}
           className={inputClass}
         >
@@ -219,6 +229,7 @@ function ItemLine({
         <input
           id={id("origin")}
           name="item_origin"
+          ref={originRef}
           type="text"
           defaultValue={DEFAULT_ORIGIN}
           aria-invalid={Boolean(errors.origin)}
