@@ -18,7 +18,10 @@ const inputClass =
 const DEFAULT_ORIGIN = "창원공동물류센터";
 
 /** 이 회사를 고르면 상차지를 해당 값으로 바꿉니다. 다른 회사를 골라도 상차지는 그대로 둡니다. */
-const ORIGIN_ON_SELECT: Record<string, string> = { 락텍: "락텍" };
+const ORIGIN_ON_SELECT: Record<string, string> = {
+  락텍: "락텍",
+  "대하(양산)": "양산대하",
+};
 
 /**
  * 신규 등록: 날짜(독립) → 회사 줄 여러 개(합적) → 배차 정보(기사·차량·지급금액) 한 번.
@@ -198,7 +201,7 @@ function ItemLine({
 }) {
   const id = (field: string) => `item_${field}_${lineKey}`;
   const originRef = useRef<HTMLInputElement>(null);
-  // 락텍을 고르면 상차지를 락텍으로 바꿉니다. 그 외 회사는 상차지를 건드리지 않습니다.
+  // ORIGIN_ON_SELECT에 있는 회사를 고르면 상차지를 바꿉니다. 그 외 회사는 상차지를 건드리지 않습니다.
   function handleCompanyChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const origin = ORIGIN_ON_SELECT[event.target.value];
     if (origin && originRef.current) originRef.current.value = origin;
