@@ -72,3 +72,21 @@ export const AUTOFILL_DRIVERS: Record<string, { phone?: string; vehicle?: string
 
 /** 신규 등록에서 기사를 비워두면 저장되는 이름 (소장님 직접 운행). 이때 지급금액이 비어 있으면 0으로 저장합니다. */
 export const OWNER_DRIVER = "정홍진";
+
+/**
+ * 전화번호에 하이픈을 맞춰 넣습니다. 숫자만 입력해도 됩니다.
+ *   01012345678 → 010-1234-5678,  0212345678 → 02-1234-5678,  15881234 → 1588-1234
+ * 자릿수가 맞지 않으면 입력한 그대로 둡니다.
+ */
+export function formatPhone(raw: string) {
+  const value = raw.trim();
+  const digits = value.replace(/\D/g, "");
+  if (digits.startsWith("02")) {
+    if (digits.length === 9) return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    if (digits.length === 10) return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  if (digits.length === 8 && !digits.startsWith("0")) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  return value;
+}

@@ -6,7 +6,7 @@ import {
   type DispatchFormState,
 } from "@/app/actions/dispatch";
 import type { DriverInfo } from "@/app/lib/dispatch";
-import { COMPANY_OPTIONS } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS, formatPhone } from "@/app/lib/dispatch-options";
 
 type TripErrors = NonNullable<DispatchFormState["fieldErrors"]>;
 type ItemErrors = NonNullable<DispatchFormState["itemErrors"]>[number];
@@ -199,6 +199,10 @@ function EntryFields({
               name="driverPhone"
               ref={phoneRef}
               type="tel"
+              // 칸을 벗어나면 하이픈을 맞춰 보여줍니다 (저장할 때도 서버에서 한 번 더 맞춥니다).
+              onBlur={(event) => {
+                event.target.value = formatPhone(event.target.value);
+              }}
               placeholder="010-1234-5678"
               aria-invalid={Boolean(tripErrors.driverPhone)}
               className={inputClass}

@@ -3,7 +3,12 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedHeader } from "@/app/lib/admin-auth";
-import { COMPANY_OPTIONS, OWNER_DRIVER, normalizeTonnage } from "@/app/lib/dispatch-options";
+import {
+  COMPANY_OPTIONS,
+  OWNER_DRIVER,
+  formatPhone,
+  normalizeTonnage,
+} from "@/app/lib/dispatch-options";
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 
 // 날짜는 짐(청구 항목)의 값입니다. 등록 폼에서는 독립된 칸 하나로 받아 모든 회사 줄에 넣습니다.
@@ -50,11 +55,13 @@ const TRIP_RULES: Record<TripField, Rule<TripColumn>> = {
   driver: { column: "driver", parse: (raw) => ({ value: raw }) }, // 선택 입력
   driverPhone: {
     column: "driver_phone",
-    // 선택 입력이지만, 입력했다면 형식을 확인합니다.
-    parse: (raw) =>
-      !raw || PHONE_PATTERN.test(raw)
-        ? { value: raw }
-        : { error: "전화번호를 올바르게 입력해 주세요. (예: 010-1234-5678)" },
+    // 선택 입력이지만, 입력했다면 하이픈을 맞추고 형식을 확인합니다.
+    parse: (raw) => {
+      const value = formatPhone(raw);
+      return !value || PHONE_PATTERN.test(value)
+        ? { value }
+        : { error: "전화번호를 올바르게 입력해 주세요. (예: 010-1234-5678)" };
+    },
   },
   vehicleNumber: { column: "vehicle_number", parse: (raw) => ({ value: raw }) }, // 선택 입력
   driverPay: {
