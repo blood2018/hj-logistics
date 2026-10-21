@@ -183,7 +183,7 @@ function EntryFields({
               list="driver-options"
               autoComplete="off"
               onChange={handleDriverChange}
-              placeholder="기사명"
+              placeholder="비우면 정홍진"
               aria-invalid={Boolean(tripErrors.driver)}
               className={inputClass}
             />

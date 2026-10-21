@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { isAuthorizedHeader } from "@/app/lib/admin-auth";
-import { COMPANY_OPTIONS, normalizeTonnage } from "@/app/lib/dispatch-options";
+import { COMPANY_OPTIONS, OWNER_DRIVER, normalizeTonnage } from "@/app/lib/dispatch-options";
 import { createSupabaseAdminClient } from "@/app/lib/supabase/admin";
 
 // 날짜는 짐(청구 항목)의 값입니다. 등록 폼에서는 독립된 칸 하나로 받아 모든 회사 줄에 넣습니다.
@@ -130,6 +130,9 @@ export async function createDispatchRecord(
     if ("error" in result) fieldErrors[field] = result.error;
     else trip[rule.column] = result.value;
   }
+  // 기사를 비워두면 소장님 직접 운행으로 저장하고, 지급금액이 비어 있으면 0원으로 둡니다.
+  if (!trip.driver) trip.driver = OWNER_DRIVER;
+  if (trip.driver === OWNER_DRIVER && trip.driver_pay == null) trip.driver_pay = 0;
 
   const lineCount = formData.getAll(itemInputName("company")).length;
   const items: Partial<Record<ItemColumn, string | number | null>>[] = [];

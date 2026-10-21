@@ -69,3 +69,6 @@ export const AUTOFILL_DRIVERS: Record<string, { phone?: string; vehicle?: string
   김정주: {},
   정기술: {},
 };
+
+/** 신규 등록에서 기사를 비워두면 저장되는 이름 (소장님 직접 운행). 이때 지급금액이 비어 있으면 0으로 저장합니다. */
+export const OWNER_DRIVER = "정홍진";
