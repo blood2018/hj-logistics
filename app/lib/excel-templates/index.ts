@@ -1,4 +1,4 @@
-import { changwonTemplate } from "./changwon";
+import { changwonTemplate, sensitecTemplate } from "./changwon";
 import { defaultTemplate } from "./default";
 import { driverTemplate } from "./driver";
 import { roctecTemplate } from "./roctec";
@@ -9,6 +9,7 @@ import type { ExcelTemplate } from "./types";
 export const EXCEL_TEMPLATES: ExcelTemplate[] = [
   roctecTemplate,
   changwonTemplate,
+  sensitecTemplate,
   defaultTemplate,
   driverTemplate,
 ];

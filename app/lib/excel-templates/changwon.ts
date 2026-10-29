@@ -58,12 +58,9 @@ function tonnageCellValue(tonnage: string) {
   return match ? Number(match[1]) : tonnage;
 }
 
-export const changwonTemplate: ExcelTemplate = {
-  id: "changwon",
-  label: "창원공동물류센터 양식",
-  group: GROUP,
-  companies: MEMBERS,
-  async build(workbook, rows, filters) {
+/** companies: 이 양식에 담는 회사들 (요약 영역에도 이 순서로 한 줄씩 들어갑니다) */
+function buildChangwonSheet(companies: string[]): ExcelTemplate["build"] {
+  return async (workbook, rows, filters) => {
     const sheet = await loadTemplateFile(workbook, "changwon.xlsx");
 
     const ordered = [...rows].reverse(); // 날짜 오름차순
@@ -113,7 +110,7 @@ export const changwonTemplate: ExcelTemplate = {
     rowNumber += 1;
     const summaryStart = rowNumber;
     // 소속 회사 하나로 조회했으면 그 회사 줄만, 그룹 전체(또는 회사 미지정)면 모든 회사 줄을 넣습니다.
-    const summaryCompanies = MEMBERS.includes(filters.company) ? [filters.company] : SUMMARY_COMPANIES;
+    const summaryCompanies = companies.includes(filters.company) ? [filters.company] : companies;
     summaryCompanies.forEach((company, index) => {
       const isLast = index === summaryCompanies.length - 1;
       const row = applyRowStyle(sheet, rowNumber, isLast ? supplyStyle : companyStyle);
@@ -144,5 +141,22 @@ export const changwonTemplate: ExcelTemplate = {
     totalRow.getCell("H").value = hasData ? { formula: `SUM(${dataRange("H")})`, result: total } : 0;
 
     applyPrintLayout(sheet, { printArea: `A1:I${rowNumber}`, titleRows: "3:3" });
-  },
+  };
+}
+
+export const changwonTemplate: ExcelTemplate = {
+  id: "changwon",
+  label: "창원공동물류센터 양식",
+  group: GROUP,
+  companies: MEMBERS,
+  build: buildChangwonSheet(SUMMARY_COMPANIES),
+};
+
+// 센시텍은 창원공동물류센터 그룹은 아니지만 같은 양식을 씁니다 (요약 영역은 센시텍 한 줄).
+const SENSITEC = ["센시텍"];
+export const sensitecTemplate: ExcelTemplate = {
+  id: "sensitec",
+  label: "센시텍 양식",
+  companies: SENSITEC,
+  build: buildChangwonSheet(SENSITEC),
 };
