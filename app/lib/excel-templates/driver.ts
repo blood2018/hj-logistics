@@ -1,5 +1,5 @@
 import { applyPrintLayout } from "./shared";
-import { columnLetter, thinBorder, writeSiteTable, type SiteColumnKey } from "./site-table";
+import { columnLetter, oldestFirst, thinBorder, writeSiteTable, type SiteColumnKey } from "./site-table";
 import type { ExcelTemplate } from "./types";
 
 // 기사 정산 양식: 사이트 조회 표를 그대로 엑셀로 옮기고(지급금액 포함), 그 아래에 기사별 소계 표를 붙입니다.
@@ -30,7 +30,7 @@ export const driverTemplate: ExcelTemplate = {
     const sheet = workbook.addWorksheet("기사정산", {
       views: [{ state: "frozen", ySplit: 1 }],
     });
-    const { lastRow } = writeSiteTable(sheet, rows, KEYS);
+    const { lastRow } = writeSiteTable(sheet, oldestFirst(rows), KEYS);
 
     // 기사별 소계 (표 아래 한 줄 띄우고)
     const byDriver = new Map<string, { trips: Set<string>; pay: number }>();

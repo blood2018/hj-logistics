@@ -150,3 +150,16 @@ export function columnLetter(index: number) {
   }
   return s;
 }
+
+/** 조회 결과(최신순)를 날짜 오름차순으로 바꿉니다. 같은 날짜는 먼저 등록한 배차부터, 합적 줄 순서와 묶음은 그대로입니다. */
+export function oldestFirst(rows: DispatchRecord[]) {
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort(
+      (a, b) =>
+        a.row.dispatch_date.localeCompare(b.row.dispatch_date) ||
+        a.row.trip_created_at.localeCompare(b.row.trip_created_at) ||
+        a.index - b.index
+    )
+    .map(({ row }) => row);
+}
