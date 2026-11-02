@@ -9,6 +9,7 @@ import {
   findTemplate,
   resolveTemplateForCompany,
 } from "@/app/lib/excel-templates";
+import { COMPANY_GROUPS } from "@/app/lib/dispatch-options";
 
 // /admin/* 경로이므로 proxy.ts의 Basic Auth로 보호됩니다.
 export async function GET(request: NextRequest) {
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
   try {
     rows = await fetchDispatchRecords(filters);
     // 회사 전용 양식은 조회 결과 중 그 회사 건만 담습니다 (기본 양식은 전체).
-    if (template.companies.length > 0) {
+    // anyCompany 양식은 회사를 하나 골라 조회했으면 그 회사 건을 그대로 담습니다.
+    const pickedOneCompany = filters.company && !(filters.company in COMPANY_GROUPS);
+    if (template.companies.length > 0 && !(template.anyCompany && pickedOneCompany)) {
       rows = rows.filter((row) => template.companies.includes(row.company));
     }
   } catch (err) {

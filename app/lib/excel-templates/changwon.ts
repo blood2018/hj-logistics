@@ -58,8 +58,11 @@ function tonnageCellValue(tonnage: string) {
   return match ? Number(match[1]) : tonnage;
 }
 
-/** companies: 이 양식에 담는 회사들 (요약 영역에도 이 순서로 한 줄씩 들어갑니다) */
-function buildChangwonSheet(companies: string[]): ExcelTemplate["build"] {
+/**
+ * companies: 이 양식에 담는 회사들 (요약 영역에도 이 순서로 한 줄씩 들어갑니다)
+ * anyCompany: 목록에 없는 회사를 하나 골라 조회해도 그 회사 한 줄로 요약합니다.
+ */
+function buildChangwonSheet(companies: string[], anyCompany = false): ExcelTemplate["build"] {
   return async (workbook, rows, filters) => {
     const sheet = await loadTemplateFile(workbook, "changwon.xlsx");
 
@@ -109,8 +112,11 @@ function buildChangwonSheet(companies: string[]): ExcelTemplate["build"] {
     // 한 줄 띄우고 요약 영역
     rowNumber += 1;
     const summaryStart = rowNumber;
-    // 소속 회사 하나로 조회했으면 그 회사 줄만, 그룹 전체(또는 회사 미지정)면 모든 회사 줄을 넣습니다.
-    const summaryCompanies = companies.includes(filters.company) ? [filters.company] : companies;
+    // 회사 하나로 조회했으면 그 회사 줄만, 그룹 전체(또는 회사 미지정)면 모든 회사 줄을 넣습니다.
+    const oneCompany =
+      companies.includes(filters.company) ||
+      (anyCompany && filters.company !== "" && !(filters.company in COMPANY_GROUPS));
+    const summaryCompanies = oneCompany ? [filters.company] : companies;
     summaryCompanies.forEach((company, index) => {
       const isLast = index === summaryCompanies.length - 1;
       const row = applyRowStyle(sheet, rowNumber, isLast ? supplyStyle : companyStyle);
@@ -149,7 +155,9 @@ export const changwonTemplate: ExcelTemplate = {
   label: "창원공동물류센터 양식",
   group: GROUP,
   companies: MEMBERS,
-  build: buildChangwonSheet(SUMMARY_COMPANIES),
+  // 창원공동물류센터 소속이 아닌 회사를 조회해도 이 양식으로 출력할 수 있습니다.
+  anyCompany: true,
+  build: buildChangwonSheet(SUMMARY_COMPANIES, true),
 };
 
 // 센시텍은 창원공동물류센터 그룹은 아니지만 같은 양식을 씁니다 (요약 영역은 센시텍 한 줄).
