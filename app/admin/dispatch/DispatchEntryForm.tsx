@@ -252,6 +252,8 @@ function ItemLine({
     if (fill?.origin && originRef.current) originRef.current.value = fill.origin;
     if (fill?.destination && destinationRef.current) destinationRef.current.value = fill.destination;
   }
+  // 등록 후 회사구분이 그대로 남을 때 자동으로 채운 상차지·하차지도 같이 남깁니다.
+  const initialFill = FILL_ON_SELECT[defaultCompany];
   // 넓은 화면에서는 첫 줄에만 칸 이름을 보여줍니다.
   const labelClass = showLabelsOnWide ? "" : "lg:sr-only";
 
@@ -280,7 +282,7 @@ function ItemLine({
           name="item_origin"
           ref={originRef}
           type="text"
-          defaultValue={DEFAULT_ORIGIN}
+          defaultValue={initialFill?.origin ?? DEFAULT_ORIGIN}
           aria-invalid={Boolean(errors.origin)}
           className={inputClass}
         />
@@ -291,6 +293,7 @@ function ItemLine({
           name="item_destination"
           ref={destinationRef}
           type="text"
+          defaultValue={initialFill?.destination}
           autoFocus={autoFocus}
           placeholder="예: 부산 강서구"
           aria-invalid={Boolean(errors.destination)}
