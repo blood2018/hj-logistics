@@ -57,7 +57,7 @@ export default function StrengthsSection() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-2xl">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-blue-700">
-            왜 홍진종합물류인가
+            왜 HJ LOGIS인가
           </h2>
           <p className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             화주사가 믿고 맡기는 이유

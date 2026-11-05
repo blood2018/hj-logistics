@@ -36,7 +36,7 @@ export default function Hero() {
         <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
           신뢰와 정확성의 B2B 화물운송 파트너,
           <br />
-          <span className="text-blue-300">홍진종합물류</span>
+          <span className="text-blue-300">{siteConfig.name}</span>
         </h1>
 
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-blue-100/80">

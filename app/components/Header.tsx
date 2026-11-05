@@ -11,13 +11,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-blue-950/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-lg font-bold tracking-tight text-white">
-            {siteConfig.name}
-          </span>
-          <span className="hidden text-xs font-medium text-blue-300 sm:inline">
-            {siteConfig.englishName}
-          </span>
+        <Link href="/" className="text-lg font-bold tracking-tight text-white">
+          {siteConfig.name}
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

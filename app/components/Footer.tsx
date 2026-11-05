@@ -13,12 +13,14 @@ export default function Footer() {
           <div className="text-sm">
             <p>대표전화 {siteConfig.phoneDisplay}</p>
             <p className="mt-1">이메일 {siteConfig.email}</p>
-            <p className="mt-1">사업자등록번호 {siteConfig.businessNumber}</p>
+            <p className="mt-1">
+              상호 {siteConfig.legalName} · 사업자등록번호 {siteConfig.businessNumber}
+            </p>
           </div>
         </div>
 
         <p className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
-          &copy; {new Date().getFullYear()} {siteConfig.englishName}. All
+          &copy; {new Date().getFullYear()} {siteConfig.name}. All
           rights reserved.
         </p>
       </div>
