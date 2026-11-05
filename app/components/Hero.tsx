@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const stats = [
   { value: "24시간", label: "당일 배차 대응" },
   { value: "전국", label: "화물 네트워크" },
@@ -6,10 +8,23 @@ const stats = [
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-linear-to-b from-blue-950 via-blue-900 to-slate-900">
+    <section className="relative overflow-hidden bg-blue-950">
+      {/* 고속도로 항공 사진 (Unsplash 무료 사진 photo-1780000291226) 위에 남색을 덮어 글자가 잘 보이게 합니다. */}
+      <Image
+        src="/images/hero-highway.jpg"
+        alt=""
+        fill
+        preload
+        sizes="100vw"
+        className="object-cover"
+      />
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.25),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(30,64,175,0.35),transparent_50%)]"
+        className="absolute inset-0 bg-linear-to-r from-blue-950 via-blue-950/85 to-blue-900/40"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-linear-to-t from-slate-950/70 via-transparent to-transparent"
       />
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-start px-6 py-24 sm:py-32">

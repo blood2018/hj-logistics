@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const strengths = [
   {
     title: "24시간 당일 배차",
@@ -88,6 +90,36 @@ export default function StrengthsSection() {
               </p>
             </div>
           ))}
+        </div>
+
+        {/* 현장 사진 (Unsplash 무료 사진 photo-1720811559371, photo-1708596718852) */}
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-5">
+          <figure className="relative h-64 overflow-hidden rounded-2xl md:col-span-3 md:h-80">
+            <Image
+              src="/images/cargo-loading.jpg"
+              alt="물류센터에서 화물을 싣고 있는 트럭"
+              fill
+              sizes="(min-width: 768px) 60vw, 100vw"
+              className="object-cover"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-blue-950/85 to-transparent px-6 pb-5 pt-16 text-white">
+              <p className="text-lg font-semibold">상차부터 하차까지 한 번에</p>
+              <p className="mt-1 text-sm text-blue-100/80">화물 특성에 맞는 차량을 배정해 안전하게 운송합니다.</p>
+            </figcaption>
+          </figure>
+          <figure className="relative h-64 overflow-hidden rounded-2xl md:col-span-2 md:h-80">
+            <Image
+              src="/images/loading-dock.jpg"
+              alt="물류센터 하역장에 나란히 선 화물차"
+              fill
+              sizes="(min-width: 768px) 40vw, 100vw"
+              className="object-cover"
+            />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-linear-to-t from-blue-950/85 to-transparent px-6 pb-5 pt-16 text-white">
+              <p className="text-lg font-semibold">전국 화물 네트워크</p>
+              <p className="mt-1 text-sm text-blue-100/80">협력 차주망으로 당일 배차를 지원합니다.</p>
+            </figcaption>
+          </figure>
         </div>
       </div>
     </section>
